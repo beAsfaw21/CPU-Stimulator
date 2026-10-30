@@ -63,6 +63,56 @@ public class TestCPU {
                     "execution should continue after the jump target");
         });
 
+        runner.runTest("CPU.JMP and backward RJMP control flow", () -> {
+            runner.resetCPU();
+            AsmIR absolute = Assembler.assemble(
+                    "jmp target\nmov r0, #99\ntarget: mov r0, #7");
+            runner.runAsmProgramSafely(absolute, 100);
+            runner.assertEquals(7, CPU.registers[Registers.R0.ordinal()],
+                    "jmp should transfer control to its absolute target");
+
+            runner.resetCPU();
+            AsmIR relative = Assembler.assemble(
+                    "mov r0, #1\nrjmp #-1");
+            CPU.step(relative);
+            CPU.step(relative);
+            runner.assertEquals(1, CPU.registers[Registers.PC.ordinal()],
+                    "negative rjmp should move backward from the next instruction");
+        });
+
+        runner.runTest("CPU logical register and immediate operations", () -> {
+            runner.resetCPU();
+            AsmIR or = Assembler.assemble("mov r0, #0x00F0\nmov r1, #0x0F0F\nor r0, r1");
+            runner.runAsmProgramSafely(or, 100);
+            runner.assertEquals(0x0FFF, CPU.registers[Registers.R0.ordinal()],
+                    "register OR should use the source register");
+
+            runner.resetCPU();
+            AsmIR xor = Assembler.assemble("mov r0, #0x0F0F\nxor r0, #0x00FF");
+            runner.runAsmProgramSafely(xor, 100);
+            runner.assertEquals(0x0FF0, CPU.registers[Registers.R0.ordinal()],
+                    "immediate XOR should use the immediate value");
+
+            runner.resetCPU();
+            AsmIR and = Assembler.assemble("mov r0, #0x0FFF\nand r0, #0x00F0");
+            runner.runAsmProgramSafely(and, 100);
+            runner.assertEquals(0x00F0, CPU.registers[Registers.R0.ordinal()],
+                    "immediate AND should use the immediate value");
+            runner.assertFalse(CPU.alu.C, "logical operations should clear carry");
+            runner.assertFalse(CPU.alu.V, "logical operations should clear overflow");
+        });
+
+        runner.runTest("CPU logical immediate operations update zero and negative flags", () -> {
+            runner.resetCPU();
+            AsmIR code = Assembler.assemble(
+                    "mov r0, #0x8000\nand r0, #0x8000\nxor r0, #0x8000\nor r0, #0x8000");
+            runner.runAsmProgramSafely(code, 100);
+            runner.assertEquals(0x8000, CPU.registers[Registers.R0.ordinal()],
+                    "logical immediate result");
+            runner.assertFalse(CPU.alu.Z, "non-zero logical result should clear zero");
+            runner.assertTrue(CPU.alu.N, "bit 15 should set negative");
+        });
+
         runner.runTest("CPU.CALL and RET preserve the return address", () -> {
             runner.resetCPU();
             AsmIR code = Assembler.assemble(
@@ -180,10 +230,36 @@ public class TestCPU {
                 CPU.push_stack(1);
                 runner.fail("push below stack boundary should fail");
             } catch (RuntimeException e) {
-                runner.assertEqualsExact(0xEFFE, CPU.registers[Registers.SP.ordinal()],
-                        "stack pointer should move before overflow is detected");
+                runner.assertEqualsExact(0xF000, CPU.registers[Registers.SP.ordinal()],
+                        "stack pointer should remain unchanged after overflow");
                 runner.assertTrue(e.getMessage().contains("STACK OVERFLOW"),
                         "error should identify stack overflow");
+            }
+        });
+
+        runner.runTest("CPU rejects POP and RET stack underflow", () -> {
+            runner.resetCPU();
+            AsmIR pop = Assembler.assemble("pop");
+            try {
+                CPU.step(pop);
+                runner.fail("pop on an empty stack should fail");
+            } catch (RuntimeException e) {
+                runner.assertTrue(e.getMessage().contains("STACK UNDERFLOW"),
+                        "pop error should identify stack underflow");
+                runner.assertEqualsExact(0xFFFF, CPU.registers[Registers.SP.ordinal()],
+                        "pop underflow should not change SP");
+            }
+
+            runner.resetCPU();
+            AsmIR ret = Assembler.assemble("ret");
+            try {
+                CPU.step(ret);
+                runner.fail("ret on an empty stack should fail");
+            } catch (RuntimeException e) {
+                runner.assertTrue(e.getMessage().contains("STACK UNDERFLOW"),
+                        "ret error should identify stack underflow");
+                runner.assertEqualsExact(0xFFFF, CPU.registers[Registers.SP.ordinal()],
+                        "ret underflow should not change SP");
             }
         });
 

@@ -109,7 +109,7 @@ java -cp out simulator.TestRunner
 The test runner should finish without failures:
 
 ```text
-Ran 23 tests, failures: 0
+Ran 30 tests, failures: 0
 ```
 
 If you change the GUI, also launch it and manually verify the affected workflow:

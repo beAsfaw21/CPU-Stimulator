@@ -176,7 +176,10 @@ The `ld` and `st` instructions use this little-endian representation.
 
 ## Stack and subroutines
 
-`push` writes a value to the stack and decreases `SP`. `pop` advances `SP` by two bytes.
+`push` writes a value to the stack and decreases `SP`. `pop` advances `SP` by
+two bytes without exposing the discarded value. A push beyond `0xF000` or a
+pop/return from an empty stack raises a stack-boundary error without changing
+`SP`.
 
 `call`:
 
@@ -190,6 +193,10 @@ The `ld` and `st` instructions use this little-endian representation.
 3. Advances `SP`.
 
 The CPU raises a stack-overflow error when a push would move below the stack region.
+
+`rjmp` applies its signed offset to the `PC` after the instruction fetch, so
+offset `1` skips one instruction and negative offsets can return to earlier
+instructions.
 
 ## Component responsibilities
 

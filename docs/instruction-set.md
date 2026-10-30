@@ -264,7 +264,7 @@ Removes the top 16-bit stack entry:
 pop
 ```
 
-The stack pointer increases by two bytes. The current implementation does not copy the popped value into a general-purpose register.
+The stack pointer increases by two bytes. The current implementation does not copy the popped value into a general-purpose register. Popping an empty stack raises a stack-underflow error.
 
 ## Subroutines
 
@@ -284,6 +284,10 @@ Restores the return address from the stack:
 ```asm
 ret
 ```
+
+`ret` reads the little-endian 16-bit address at the current `SP`, advances
+`SP` by two bytes, and resumes at that address. Returning from an empty stack
+raises a stack-underflow error.
 
 Example:
 

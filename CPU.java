@@ -55,19 +55,19 @@ public class CPU {
                 registers[inst.dst.ordinal()] = alu.or(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
             case OpCodes.OR_IMM:
-                registers[inst.dst.ordinal()] = alu.or(registers[inst.dst.ordinal()], registers[inst.immediate]);
+                registers[inst.dst.ordinal()] = alu.or(registers[inst.dst.ordinal()], inst.immediate);
                 break;
             case OpCodes.XOR:
                 registers[inst.dst.ordinal()] = alu.xor(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
             case OpCodes.XOR_IMM:
-                registers[inst.dst.ordinal()] = alu.xor(registers[inst.dst.ordinal()], registers[inst.immediate]);
+                registers[inst.dst.ordinal()] = alu.xor(registers[inst.dst.ordinal()], inst.immediate);
                 break;
             case OpCodes.AND:
                 registers[inst.dst.ordinal()] = alu.and(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
             case OpCodes.AND_IMM:
-                registers[inst.dst.ordinal()] = alu.and(registers[inst.dst.ordinal()], registers[inst.immediate]);
+                registers[inst.dst.ordinal()] = alu.and(registers[inst.dst.ordinal()], inst.immediate);
                 break;
             case OpCodes.CMP:
                 alu.cmp(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
@@ -122,32 +122,43 @@ public class CPU {
                 push_stack(inst.immediate);
                 break;
             case OpCodes.POP:
-                registers[Registers.SP.ordinal()] += 2;
+                        pop_stack();
                 break;
             case OpCodes.CALL:
                 push_stack(registers[Registers.PC.ordinal()]);
                 registers[Registers.PC.ordinal()] = inst.immediate;
                 break;
             case OpCodes.RET:
-                int returnAddress = (memory.read(registers[Registers.SP.ordinal()]) & 0xFF)
-                        | ((memory.read(registers[Registers.SP.ordinal()] + 1) & 0xFF) << 8);
-                registers[Registers.PC.ordinal()] = returnAddress;
+                        registers[Registers.PC.ordinal()] = pop_stack();
+                        break;
+                    default:
+                        halt = true;
+                        throw new RuntimeException("Unknown instruction");
+                }
+    }
+
+    // helper method to pop and return a value from the stack
+    public static int pop_stack() {
+                int sp = registers[Registers.SP.ordinal()];
+                if (sp < 0xF000 || sp > 0xFFFD || (sp & 1) != 1) {
+                    throw new RuntimeException("STACK UNDERFLOW");
+                }
+
+                int val = (memory.read(sp) & 0xFF)
+                        | ((memory.read(sp + 1) & 0xFF) << 8);
                 registers[Registers.SP.ordinal()] += 2;
-                break;
-            default:
-                halt = true;
-                throw new RuntimeException("Unknown instruction");
-        }
+                return val;
     }
 
     // helper method to push a value onto the stack
     public static void push_stack(int val) {
-        registers[Registers.SP.ordinal()] -= 2;
-        int sp = registers[Registers.SP.ordinal()];
-        if (sp < 0xF000) { // 64k - 4k = 0xF000
-            throw new RuntimeException("STACK OVERFLOW");
-        }
-        memory.write(sp, (byte) (val & 0xFF));
-        memory.write(sp + 1, (byte) ((val >> 8) & 0xFF));
+                int currentSp = registers[Registers.SP.ordinal()];
+                if (currentSp < 0xF002 || currentSp > 0xFFFF || (currentSp & 1) == 0) {
+                    throw new RuntimeException("STACK OVERFLOW");
+                }
+                int sp = currentSp - 2;
+                registers[Registers.SP.ordinal()] = sp;
+                memory.write(sp, (byte) (val & 0xFF));
+                memory.write(sp + 1, (byte) ((val >> 8) & 0xFF));
     }
-};
+}

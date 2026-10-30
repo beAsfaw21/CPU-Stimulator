@@ -41,6 +41,8 @@ No changes yet.
 - In-app instruction reference for assembly mnemonics and operands
 - Source-line breakpoint control in the GUI
 - Register and ALU flag change indicators in the GUI
+- Correct immediate logical operations and stack boundary handling
+- Expanded instruction execution tests
 - Makefile with common build, test, run, and clean commands
 - EditorConfig formatting rules
 - Support and question-reporting guidance

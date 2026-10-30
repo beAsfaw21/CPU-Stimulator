@@ -18,12 +18,13 @@ This roadmap describes possible future improvements for the 16-bit CPU Simulator
 - In-app instruction-set reference
 - Source-line breakpoint control
 - Register and flag change highlighting
+- Complete instruction and ALU edge-case test coverage
+- Stack boundary and subroutine edge-case validation
 - Contributor, support, security, and documentation guidance
 
 ## Near-term improvements
 
-- Add tests for every conditional branch instruction
-- Add tests for `CALL` and `RET` edge cases
+- Improve interactive lessons and beginner examples
 
 ## Future possibilities
 
