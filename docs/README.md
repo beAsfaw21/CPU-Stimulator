@@ -38,6 +38,10 @@ Introduces assembly programming for beginners with examples covering:
 
 Explains how to build, test, extend, and contribute to the project. It includes guidance for adding instructions, writing tests, changing the assembler, and validating GUI changes.
 
+### [Testing guide](testing-guide.md)
+
+Explains the test runner, current coverage areas, test-writing conventions, safe CPU execution, and CI validation.
+
 ## Examples
 
 Runnable assembly examples are available in the repository's [`samples/`](../samples/) directory:
@@ -57,4 +61,5 @@ If you are new to the project:
 2. Run the examples in [`samples/`](../samples/).
 3. Read the [instruction set reference](instruction-set.md).
 4. Read the [architecture guide](architecture.md).
-5. Use the [development guide](development-guide.md) when modifying the code.
+5. Read the [testing guide](testing-guide.md) before changing behavior.
+6. Use the [development guide](development-guide.md) when modifying the code.

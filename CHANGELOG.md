@@ -29,6 +29,7 @@ No changes yet.
 - Contributor-focused development guide
 - Documentation index
 - Sample-program guide with expected results and learning order
+- Testing guide with test-writing and CI instructions
 - Makefile with common build, test, run, and clean commands
 - EditorConfig formatting rules
 - Support and question-reporting guidance
