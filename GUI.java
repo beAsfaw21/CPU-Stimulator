@@ -406,6 +406,13 @@ public class GUI {
             // bounds if execution finished.
         });
         toolBar.add(stopButton);
+
+        JButton resetButton = new JButton("↻ Reset");
+        resetButton.addActionListener(e -> {
+            resetCPU();
+            showNotification(frame, "CPU state reset.");
+        });
+        toolBar.add(resetButton);
         toolBar.addSeparator();
 
         JButton saveButton = new JButton("💾 Save");

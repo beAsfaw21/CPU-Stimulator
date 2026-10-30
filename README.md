@@ -97,7 +97,8 @@ To execute a program:
 3. Select **Step** to execute one instruction.
 4. Select **Run** to execute the program continuously.
 5. Select **Stop** to halt execution.
-6. Inspect the registers and memory after execution.
+6. Select **Reset** to clear registers, memory, flags, and execution state without reopening the source file.
+7. Inspect the registers and memory after execution.
 
 The current source line is highlighted while stepping. The memory search field accepts hexadecimal addresses without the `0x` prefix.
 

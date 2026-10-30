@@ -167,7 +167,8 @@ When changing GUI behavior:
 3. Open or edit a sample assembly file.
 4. Save the file.
 5. Test **Step**, **Run**, and **Stop** where relevant.
-6. Confirm source highlighting, register display, and memory display remain consistent.
+6. Test **Reset** when changing execution-state behavior.
+7. Confirm source highlighting, register display, and memory display remain consistent.
 
 The GUI executes saved source files. Changes typed into the editor must be saved before running or stepping.
 
