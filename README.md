@@ -317,4 +317,6 @@ Electrical and Computer Engineering student, AAiT
 
 ## License
 
-No license file is currently included in this repository. Add a license before distributing or reusing the project.
+This project is licensed under the [MIT License](LICENSE).
+
+You are free to use, copy, modify, distribute, and sublicense the project, provided that the original copyright and license notices are included.
