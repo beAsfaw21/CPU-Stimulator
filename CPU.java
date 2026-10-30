@@ -126,9 +126,12 @@ public class CPU {
                 break;
             case OpCodes.CALL:
                 push_stack(registers[Registers.PC.ordinal()]);
+                registers[Registers.PC.ordinal()] = inst.immediate;
                 break;
             case OpCodes.RET:
-                registers[Registers.PC.ordinal()] = registers[Registers.SP.ordinal()];
+                int returnAddress = (memory.read(registers[Registers.SP.ordinal()]) & 0xFF)
+                        | ((memory.read(registers[Registers.SP.ordinal()] + 1) & 0xFF) << 8);
+                registers[Registers.PC.ordinal()] = returnAddress;
                 registers[Registers.SP.ordinal()] += 2;
                 break;
             default:

@@ -119,6 +119,20 @@ mov r3, #10      ; loop counter
 
 After execution, `R2` contains `89`.
 
+### Try the sample programs
+
+The [`samples/`](samples/) directory contains ready-to-run assembly programs:
+
+| File | Demonstrates |
+| --- | --- |
+| [`addition.asm`](samples/addition.asm) | Register values and arithmetic |
+| [`branching.asm`](samples/branching.asm) | Comparisons and conditional branches |
+| [`fibonacci.asm`](samples/fibonacci.asm) | Labels, loops, and `brne` |
+| [`memory.asm`](samples/memory.asm) | 16-bit little-endian memory access |
+| [`subroutine.asm`](samples/subroutine.asm) | `call`, `ret`, and the stack |
+
+Open any sample in the GUI, save it if necessary, and select **Run** or **Step**.
+
 ## Assembly language
 
 Assembly instructions are case-insensitive. Operands can be separated with commas or whitespace. Comments begin with a semicolon (`;`).
@@ -230,7 +244,8 @@ The simulator provides a 64 KiB address space:
 ├── TestALU.java        ALU tests
 ├── TestAssembler.java  Assembler tests
 ├── TestCPU.java        CPU integration tests
-└── TestRunner.java     Test runner and assertions
+├── TestRunner.java     Test runner and assertions
+└── samples/            Example assembly programs
 ```
 
 ## Testing
@@ -251,6 +266,8 @@ The test suite covers:
 - Little-endian load and store behavior
 - Push and pop operations
 - Conditional branches
+- Relative jumps and subroutine calls
+- Stack overflow detection
 - Fibonacci execution
 
 The process exits with status `1` when one or more tests fail.

@@ -51,5 +51,58 @@ public class TestCPU {
             runner.runAsmProgramSafely(code, 200);
             runner.assertEquals(89, CPU.registers[Registers.R2.ordinal()], "r2 should hold the 11th fibonacci number 89.");
         });
+
+        runner.runTest("CPU.RJMP skips the next instruction", () -> {
+            runner.resetCPU();
+            AsmIR code = Assembler.assemble(
+                    "mov r0, #1\nrjmp #1\nmov r0, #99\nmov r1, #2");
+            runner.runAsmProgramSafely(code, 100);
+            runner.assertEquals(1, CPU.registers[Registers.R0.ordinal()],
+                    "rjmp should skip the following instruction");
+            runner.assertEquals(2, CPU.registers[Registers.R1.ordinal()],
+                    "execution should continue after the jump target");
+        });
+
+        runner.runTest("CPU.CALL and RET preserve the return address", () -> {
+            runner.resetCPU();
+            AsmIR code = Assembler.assemble(
+                    "call function\nmov r0, #7\njmp done\n"
+                            + "function: mov r1, #3\nret\n"
+                            + "done: mov r2, #9");
+            runner.runAsmProgramSafely(code, 100);
+            runner.assertEquals(7, CPU.registers[Registers.R0.ordinal()],
+                    "execution should resume after call");
+            runner.assertEquals(3, CPU.registers[Registers.R1.ordinal()],
+                    "function should execute");
+            runner.assertEquals(9, CPU.registers[Registers.R2.ordinal()],
+                    "execution should reach the instruction after the function");
+            runner.assertEquals(0xFFFF, CPU.registers[Registers.SP.ordinal()],
+                    "stack pointer should be restored after ret");
+        });
+
+        runner.runTest("CPU.BRLO branches after a borrow", () -> {
+            runner.resetCPU();
+            AsmIR code = Assembler.assemble(
+                    "mov r0, #1\nmov r1, #2\ncmp r0, r1\n"
+                            + "brlo borrowed\nmov r2, #0\njmp done\n"
+                            + "borrowed: mov r2, #1\ndone:");
+            runner.runAsmProgramSafely(code, 100);
+            runner.assertEquals(1, CPU.registers[Registers.R2.ordinal()],
+                    "brlo should branch when comparison borrows");
+        });
+
+        runner.runTest("CPU detects stack overflow", () -> {
+            runner.resetCPU();
+            CPU.registers[Registers.SP.ordinal()] = 0xF000;
+            try {
+                CPU.push_stack(1);
+                runner.fail("push below stack boundary should fail");
+            } catch (RuntimeException e) {
+                runner.assertEqualsExact(0xEFFE, CPU.registers[Registers.SP.ordinal()],
+                        "stack pointer should move before overflow is detected");
+                runner.assertTrue(e.getMessage().contains("STACK OVERFLOW"),
+                        "error should identify stack overflow");
+            }
+        });
     }
 }

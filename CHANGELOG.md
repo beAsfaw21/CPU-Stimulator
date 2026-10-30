@@ -13,4 +13,9 @@ The version format follows [Semantic Versioning](https://semver.org/).
 - Java and generated-file ignore rules
 - GitHub Actions workflow for compilation and tests
 - Contribution guidelines
+- GitHub issue and pull request templates
+- GitHub CODEOWNERS configuration
+- Sample assembly programs
 - Beginner-friendly project documentation
+- Additional assembler and CPU tests
+- Correct `CALL` and `RET` subroutine execution
