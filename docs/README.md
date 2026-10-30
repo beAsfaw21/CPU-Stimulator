@@ -42,6 +42,10 @@ Explains how to build, test, extend, and contribute to the project. It includes 
 
 Explains the test runner, current coverage areas, test-writing conventions, safe CPU execution, and CI validation.
 
+### [Roadmap](roadmap.md)
+
+Lists completed work and possible future improvements for the simulator.
+
 ## Examples
 
 Runnable assembly examples are available in the repository's [`samples/`](../samples/) directory:
@@ -62,4 +66,5 @@ If you are new to the project:
 3. Read the [instruction set reference](instruction-set.md).
 4. Read the [architecture guide](architecture.md).
 5. Read the [testing guide](testing-guide.md) before changing behavior.
-6. Use the [development guide](development-guide.md) when modifying the code.
+6. Review the [roadmap](roadmap.md) for possible contribution areas.
+7. Use the [development guide](development-guide.md) when modifying the code.

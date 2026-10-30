@@ -31,6 +31,7 @@ No changes yet.
 - Sample-program guide with expected results and learning order
 - Testing guide with test-writing and CI instructions
 - README badges for CI status and license
+- Project roadmap for future improvements
 - Makefile with common build, test, run, and clean commands
 - EditorConfig formatting rules
 - Support and question-reporting guidance
