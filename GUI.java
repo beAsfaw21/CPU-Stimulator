@@ -159,7 +159,7 @@ public class GUI {
         updateMemoryDisplay();
     }
 
-    private static void runFile(Path path, int maxSteps) {
+    private static void runFile(Path path, int maxSteps, int breakpointLine, JTextArea codeArea) {
         if (path == null) {
             JOptionPane.showMessageDialog(null, "Please open a file first.", "Run Error", JOptionPane.ERROR_MESSAGE);
             return;
@@ -176,10 +176,22 @@ public class GUI {
 
                 int iter = 0;
                 while (!CPU.halt && iter++ < maxSteps) {
+                    if (breakpointLine > 0
+                            && CPU.registers[Registers.PC.ordinal()] < code.lines.size()
+                            && code.lines.get(CPU.registers[Registers.PC.ordinal()]) == breakpointLine) {
+                        highlightLine(codeArea, breakpointLine);
+                        return;
+                    }
+
+                    int[] previousRegisters = CPU.registers.clone();
+                    boolean previousZ = CPU.alu.Z;
+                    boolean previousN = CPU.alu.N;
+                    boolean previousC = CPU.alu.C;
+                    boolean previousV = CPU.alu.V;
                     CPU.step(code);
 
                     // Note: This must be run on the EDT, so we call the helper methods
-                    updateRegistersDisplay();
+                    updateRegistersDisplay(previousRegisters, previousZ, previousN, previousC, previousV);
                     updateMemoryDisplay();
                 }
 
@@ -218,9 +230,14 @@ public class GUI {
                 line_no = code.lines.get(CPU.registers[Registers.PC.ordinal()]);
             }
 
+            int[] previousRegisters = CPU.registers.clone();
+            boolean previousZ = CPU.alu.Z;
+            boolean previousN = CPU.alu.N;
+            boolean previousC = CPU.alu.C;
+            boolean previousV = CPU.alu.V;
             CPU.step(code);
 
-            updateRegistersDisplay();
+            updateRegistersDisplay(previousRegisters, previousZ, previousN, previousC, previousV);
             updateMemoryDisplay();
 
             return line_no;
@@ -243,13 +260,22 @@ public class GUI {
                 parentComponent, displayMessage, title, JOptionPane.ERROR_MESSAGE));
     }
 
-    private static String getRegisters() {
+    private static String getRegisters(int[] previousRegisters, boolean previousZ,
+            boolean previousN, boolean previousC, boolean previousV) {
         StringBuilder val = new StringBuilder();
         for (int i = 0; i < CPU.registers.length; i++) {
-            val.append(String.format("%s: 0x%04X = %d\n", Registers.values()[i], 
-                        CPU.registers[i], CPU.registers[i]));
+            boolean changed = previousRegisters != null && CPU.registers[i] != previousRegisters[i];
+            val.append(String.format("%s: 0x%04X = %d%s\n", Registers.values()[i],
+                    CPU.registers[i], CPU.registers[i], changed ? "  * changed" : ""));
         }
+        val.append(String.format("\nFlags: Z=%s N=%s C=%s V=%s",
+                formatFlag(CPU.alu.Z, previousZ), formatFlag(CPU.alu.N, previousN),
+                formatFlag(CPU.alu.C, previousC), formatFlag(CPU.alu.V, previousV)));
         return val.toString();
+    }
+
+    private static String formatFlag(boolean value, boolean previousValue) {
+        return value + (value != previousValue ? " *" : "");
     }
 
     // these are helpers to update the register and memory UI, they run on the EDT.
@@ -257,7 +283,18 @@ public class GUI {
         if (registerTextArea == null)
             return;
         SwingUtilities.invokeLater(() -> {
-            registerTextArea.setText(getRegisters());
+            registerTextArea.setText(getRegisters(null, CPU.alu.Z, CPU.alu.N, CPU.alu.C, CPU.alu.V));
+            registerTextArea.setCaretPosition(0);
+        });
+    }
+
+    private static void updateRegistersDisplay(int[] previousRegisters, boolean previousZ,
+            boolean previousN, boolean previousC, boolean previousV) {
+        if (registerTextArea == null)
+            return;
+        SwingUtilities.invokeLater(() -> {
+            registerTextArea.setText(getRegisters(previousRegisters, previousZ, previousN,
+                    previousC, previousV));
             registerTextArea.setCaretPosition(0);
         });
     }
@@ -441,13 +478,20 @@ public class GUI {
                 new SpinnerNumberModel(DEFAULT_MAX_STEPS, 1, 10000000, 1000));
         maxStepsSpinner.setToolTipText("Maximum instructions before execution stops");
         JLabel maxStepsLabel = new JLabel("Max steps:");
+        JSpinner breakpointSpinner = new JSpinner(
+                new SpinnerNumberModel(0, 0, 1000000, 1));
+        breakpointSpinner.setToolTipText("1-based source line; 0 disables the breakpoint");
+        JLabel breakpointLabel = new JLabel("Breakpoint line:");
         runButton.addActionListener(e -> {
             int maxSteps = (Integer) maxStepsSpinner.getValue();
-            runFile(currentFilePath, maxSteps);
+            int breakpointLine = (Integer) breakpointSpinner.getValue();
+            runFile(currentFilePath, maxSteps, breakpointLine, codeArea);
         });
         toolBar.add(runButton);
         toolBar.add(maxStepsLabel);
         toolBar.add(maxStepsSpinner);
+        toolBar.add(breakpointLabel);
+        toolBar.add(breakpointSpinner);
 
         JButton stopButton = new JButton("⏹ Stop");
         stopButton.addActionListener(e -> {

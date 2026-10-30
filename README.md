@@ -100,7 +100,9 @@ To execute a program:
 6. Select **Reset** to clear registers, memory, flags, and execution state without reopening the source file.
 7. Set **Max steps** to limit execution and protect against infinite loops.
 8. Select **Instructions** to open the built-in opcode reference.
-9. Inspect the registers and memory after execution.
+9. Enter a 1-based source line in **Breakpoint line** to pause before that instruction; use `0` to disable it.
+10. Changed registers are marked with `* changed`, and modified ALU flags are marked with `*`.
+11. Inspect the registers and memory after execution.
 
 The current source line is highlighted while stepping. The memory search field accepts hexadecimal addresses without the `0x` prefix.
 
