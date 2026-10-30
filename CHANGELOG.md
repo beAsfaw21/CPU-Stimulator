@@ -27,6 +27,7 @@ No changes yet.
 - Detailed instruction-set reference
 - Beginner-focused assembly language guide
 - Contributor-focused development guide
+- Documentation index
 
 [Unreleased]: https://github.com/beAsfaw21/CPU-Stimulator/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/beAsfaw21/CPU-Stimulator/releases/tag/v1.0.0

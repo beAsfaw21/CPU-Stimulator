@@ -250,6 +250,8 @@ The beginner-focused assembly guide is available in [`docs/assembly-guide.md`](d
 
 The contributor-focused development guide is available in [`docs/development-guide.md`](docs/development-guide.md).
 
+All technical documentation is indexed in [`docs/README.md`](docs/README.md).
+
 ## Project structure
 
 ```text
