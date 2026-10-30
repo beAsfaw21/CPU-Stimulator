@@ -28,6 +28,8 @@ No changes yet.
 - Beginner-focused assembly language guide
 - Contributor-focused development guide
 - Documentation index
+- Makefile with common build, test, run, and clean commands
+- EditorConfig formatting rules
 
 [Unreleased]: https://github.com/beAsfaw21/CPU-Stimulator/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/beAsfaw21/CPU-Stimulator/releases/tag/v1.0.0

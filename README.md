@@ -49,6 +49,15 @@ The project provides a custom assembler, a 16-bit CPU model, an arithmetic logic
 
 The project has no external dependencies and does not require Maven or Gradle.
 
+If GNU Make is available, optional developer commands are provided by the [`Makefile`](Makefile):
+
+```bash
+make build
+make test
+make run
+make clean
+```
+
 ## Installation
 
 Clone the repository:

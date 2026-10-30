@@ -12,6 +12,15 @@ Install:
 
 The project does not use Maven or Gradle. Source files are compiled directly with `javac`.
 
+If GNU Make is available, the repository also provides shortcuts:
+
+```bash
+make build
+make test
+make run
+make clean
+```
+
 ## Build and test
 
 From the repository root:
@@ -31,6 +40,8 @@ java -cp out simulator.GUI
 The source files use the `simulator` package. Always compile with `-d out` or another output directory so Java creates the correct package structure.
 
 Generated `.class` files and build directories are excluded by `.gitignore`.
+
+The repository includes an [`.editorconfig`](../.editorconfig) file with shared formatting rules for source code, assembly programs, documentation, YAML, and Makefiles.
 
 ## Source organization
 
