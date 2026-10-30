@@ -14,6 +14,7 @@ The project provides a custom assembler, a 16-bit CPU model, an arithmetic logic
 - [CPU architecture](#cpu-architecture)
 - [Project structure](#project-structure)
 - [Testing](#testing)
+- [Changelog](#changelog)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [Author](#author)
@@ -253,6 +254,10 @@ The test suite covers:
 - Fibonacci execution
 
 The process exits with status `1` when one or more tests fail.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the release history and upcoming changes.
 
 ## Troubleshooting
 
