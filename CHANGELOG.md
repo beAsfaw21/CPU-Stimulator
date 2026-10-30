@@ -24,6 +24,7 @@ No changes yet.
 - Beginner-friendly project documentation
 - Additional assembler and CPU tests
 - Correct `CALL` and `RET` subroutine execution
+- Detailed instruction-set reference
 
 [Unreleased]: https://github.com/beAsfaw21/CPU-Stimulator/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/beAsfaw21/CPU-Stimulator/releases/tag/v1.0.0

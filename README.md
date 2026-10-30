@@ -244,6 +244,8 @@ The detailed architecture guide is available in [`docs/architecture.md`](docs/ar
 - Stack operations and subroutine calls
 - Component responsibilities
 
+The complete instruction reference is available in [`docs/instruction-set.md`](docs/instruction-set.md).
+
 ## Project structure
 
 ```text
