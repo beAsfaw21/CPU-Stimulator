@@ -159,6 +159,10 @@ The memory model contains 64 KiB of addressable space:
 
 Memory is byte-addressable. A 16-bit word occupies two consecutive addresses.
 
+Reads and writes outside `0x0000`–`0xFFFF` are rejected with an
+`IllegalArgumentException`. A 16-bit `ld` or `st` operation at `0xFFFF` is
+therefore invalid because its second byte would be at `0x10000`.
+
 ### Little-endian words
 
 For the value `0x1234`:

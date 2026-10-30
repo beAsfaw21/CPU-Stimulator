@@ -7,6 +7,7 @@ public class Memory {
     private final byte[] stack = new byte[4096];   // 4 KB
 
     public byte read(int addr) {
+        validateAddress(addr);
         if (addr >= 0xF000) {
             return stack[addr - 0xF000];
         }
@@ -14,10 +15,18 @@ public class Memory {
     }
 
     public void write(int addr, byte value) {
+        validateAddress(addr);
         if (addr >= 0xF000) {
             stack[addr - 0xF000] = value;
         } else {
             ram[addr] = value;
+        }
+    }
+
+    private void validateAddress(int addr) {
+        if (addr < 0 || addr > 0xFFFF) {
+            throw new IllegalArgumentException(
+                    String.format("Memory address out of range: 0x%X", addr));
         }
     }
 }

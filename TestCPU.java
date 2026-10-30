@@ -80,6 +80,39 @@ public class TestCPU {
                     "stack pointer should be restored after ret");
         });
 
+        runner.runTest("CPU nested CALL and RET restore stack order", () -> {
+            runner.resetCPU();
+            AsmIR code = Assembler.assemble(
+                    "call outer\nmov r0, #9\njmp done\n"
+                            + "outer: call inner\nmov r1, #2\nret\n"
+                            + "inner: mov r2, #1\nret\n"
+                            + "done:");
+            runner.runAsmProgramSafely(code, 100);
+            runner.assertEquals(9, CPU.registers[Registers.R0.ordinal()],
+                    "outer return should resume at the caller");
+            runner.assertEquals(2, CPU.registers[Registers.R1.ordinal()],
+                    "outer subroutine should resume after inner return");
+            runner.assertEquals(1, CPU.registers[Registers.R2.ordinal()],
+                    "inner subroutine should execute");
+            runner.assertEquals(0xFFFF, CPU.registers[Registers.SP.ordinal()],
+                    "nested returns should restore the original stack pointer");
+        });
+
+        runner.runTest("CPU CALL stores a little-endian return address", () -> {
+            runner.resetCPU();
+            AsmIR code = Assembler.assemble(
+                    "call target\nmov r0, #1\n"
+                            + "target: mov r1, sp\nret");
+            CPU.step(code);
+            int stackAddress = CPU.registers[Registers.SP.ordinal()];
+            int low = CPU.memory.read(stackAddress) & 0xFF;
+            int high = CPU.memory.read(stackAddress + 1) & 0xFF;
+            runner.assertEquals(1, low | (high << 8),
+                    "call should store the address of the next instruction");
+            runner.assertEquals(0xFFFD, stackAddress,
+                    "call should reserve one 16-bit stack entry");
+        });
+
         runner.runTest("CPU.BRLO branches after a borrow", () -> {
             runner.resetCPU();
             AsmIR code = Assembler.assemble(
@@ -89,6 +122,55 @@ public class TestCPU {
             runner.runAsmProgramSafely(code, 100);
             runner.assertEquals(1, CPU.registers[Registers.R2.ordinal()],
                     "brlo should branch when comparison borrows");
+        });
+
+        runner.runTest("CPU.BRSH branches when there is no borrow", () -> {
+            runner.resetCPU();
+            AsmIR code = Assembler.assemble(
+                    "mov r0, #2\nmov r1, #1\ncmp r0, r1\n"
+                            + "brsh no_borrow\nmov r2, #0\njmp done\n"
+                            + "no_borrow: mov r2, #1\ndone:");
+            runner.runAsmProgramSafely(code, 100);
+            runner.assertEquals(1, CPU.registers[Registers.R2.ordinal()],
+                    "brsh should branch when comparison does not borrow");
+        });
+
+        runner.runTest("CPU.BRMI and BRPL use the sign flag", () -> {
+            runner.resetCPU();
+            AsmIR negative = Assembler.assemble(
+                    "mov r0, #0\nsub r0, #1\nbrmi negative\n"
+                            + "mov r1, #0\njmp done\nnegative: mov r1, #1\ndone:");
+            runner.runAsmProgramSafely(negative, 100);
+            runner.assertEquals(1, CPU.registers[Registers.R1.ordinal()],
+                    "brmi should branch for a negative result");
+
+            runner.resetCPU();
+            AsmIR positive = Assembler.assemble(
+                    "mov r0, #1\nsub r0, #0\nbrpl positive\n"
+                            + "mov r1, #0\njmp done\npositive: mov r1, #1\ndone:");
+            runner.runAsmProgramSafely(positive, 100);
+            runner.assertEquals(1, CPU.registers[Registers.R1.ordinal()],
+                    "brpl should branch for a non-negative result");
+        });
+
+        runner.runTest("CPU.BRGE and BRLT use signed comparison flags", () -> {
+            runner.resetCPU();
+            AsmIR greaterOrEqual = Assembler.assemble(
+                    "mov r0, #5\nmov r1, #5\ncmp r0, r1\n"
+                            + "brge greater_or_equal\nmov r2, #0\njmp done\n"
+                            + "greater_or_equal: mov r2, #1\ndone:");
+            runner.runAsmProgramSafely(greaterOrEqual, 100);
+            runner.assertEquals(1, CPU.registers[Registers.R2.ordinal()],
+                    "brge should branch when signed comparison is greater or equal");
+
+            runner.resetCPU();
+            AsmIR lessThan = Assembler.assemble(
+                    "mov r0, #4\nmov r1, #5\ncmp r0, r1\n"
+                            + "brlt less_than\nmov r2, #0\njmp done\n"
+                            + "less_than: mov r2, #1\ndone:");
+            runner.runAsmProgramSafely(lessThan, 100);
+            runner.assertEquals(1, CPU.registers[Registers.R2.ordinal()],
+                    "brlt should branch when signed comparison is less than");
         });
 
         runner.runTest("CPU detects stack overflow", () -> {
@@ -102,6 +184,45 @@ public class TestCPU {
                         "stack pointer should move before overflow is detected");
                 runner.assertTrue(e.getMessage().contains("STACK OVERFLOW"),
                         "error should identify stack overflow");
+            }
+        });
+
+        runner.runTest("Memory rejects invalid addresses", () -> {
+            Memory memory = new Memory();
+            memory.write(0x0000, (byte) 0x12);
+            memory.write(0xFFFF, (byte) 0x34);
+            runner.assertEqualsExact(0x12, memory.read(0x0000) & 0xFF,
+                    "lowest memory address should be valid");
+            runner.assertEqualsExact(0x34, memory.read(0xFFFF) & 0xFF,
+                    "highest memory address should be valid");
+
+            try {
+                memory.read(-1);
+                runner.fail("negative read address should be rejected");
+            } catch (IllegalArgumentException e) {
+                runner.assertTrue(e.getMessage().contains("out of range"),
+                        "negative address error should be descriptive");
+            }
+
+            try {
+                memory.write(0x10000, (byte) 0);
+                runner.fail("address above 16-bit range should be rejected");
+            } catch (IllegalArgumentException e) {
+                runner.assertTrue(e.getMessage().contains("out of range"),
+                        "high address error should be descriptive");
+            }
+        });
+
+        runner.runTest("CPU rejects 16-bit word access across memory boundary", () -> {
+            runner.resetCPU();
+            AsmIR code = Assembler.assemble(
+                    "mov r0, #0xFFFF\nmov r1, #0x1234\nst r0, r1");
+            try {
+                runner.runAsmProgramSafely(code, 100);
+                runner.fail("word store past the address space should be rejected");
+            } catch (IllegalArgumentException e) {
+                runner.assertTrue(e.getMessage().contains("out of range"),
+                        "boundary error should be descriptive");
             }
         });
     }

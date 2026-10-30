@@ -35,7 +35,7 @@ make test
 The suite should report:
 
 ```text
-Ran 16 tests, failures: 0
+Ran 23 tests, failures: 0
 ```
 
 The process exits with status `1` when at least one test fails.
