@@ -12,6 +12,7 @@ The project provides a custom assembler, a 16-bit CPU model, an arithmetic logic
 - [Usage](#usage)
 - [Assembly language](#assembly-language)
 - [CPU architecture](#cpu-architecture)
+- [Technical documentation](#technical-documentation)
 - [Project structure](#project-structure)
 - [Testing](#testing)
 - [Changelog](#changelog)
@@ -230,6 +231,18 @@ The simulator provides a 64 KiB address space:
 | `0xF000`–`0xFFFF` | 4 KiB stack |
 
 16-bit words are stored in little-endian order: the lower byte is stored at the lower address.
+
+## Technical documentation
+
+The detailed architecture guide is available in [`docs/architecture.md`](docs/architecture.md). It covers:
+
+- The assembly-to-execution pipeline
+- The fetch-decode-execute cycle
+- Registers and program-counter behavior
+- ALU flags and conditional branches
+- Memory layout and little-endian words
+- Stack operations and subroutine calls
+- Component responsibilities
 
 ## Project structure
 
