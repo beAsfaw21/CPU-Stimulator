@@ -14,6 +14,7 @@ The version format follows [Semantic Versioning](https://semver.org/).
 - GitHub Actions workflow for compilation and tests
 - Contribution guidelines
 - GitHub issue and pull request templates
+- GitHub issue configuration and private security reporting link
 - GitHub CODEOWNERS configuration
 - Sample assembly programs
 - Beginner-friendly project documentation
