@@ -1,5 +1,8 @@
 # 16-bit CPU Simulator
 
+[![Java CI](https://github.com/beAsfaw21/CPU-Stimulator/actions/workflows/java-ci.yml/badge.svg)](https://github.com/beAsfaw21/CPU-Stimulator/actions/workflows/java-ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A Java-based educational simulator for exploring CPU architecture, assembly language, and the fetch-decode-execute cycle.
 
 The project provides a custom assembler, a 16-bit CPU model, an arithmetic logic unit (ALU), simulated memory, a stack, a Swing GUI, and a lightweight test suite.
