@@ -20,115 +20,115 @@ public class CPU {
         Instruction inst = code.program.get(registers[Registers.PC.ordinal()]++);
 
         switch (inst.op) {
-            case OpCodes.MOV:
+            case MOV:
                 registers[inst.dst.ordinal()] = registers[inst.src.ordinal()];
                 break;
-            case OpCodes.MOV_IMM:
+            case MOV_IMM:
                 registers[inst.dst.ordinal()] = inst.immediate & 0xffff; 
                 break;
-            case OpCodes.LOAD:
+            case LOAD:
                 // each entry in memory is a byte, and a register is two bytes,
                 // so we load two adjacent bytes.
                 int low_byte = memory.read(registers[inst.src.ordinal()]) & 0xFF;
                 int high_byte = memory.read(registers[inst.src.ordinal()] + 1) & 0xFF;
                 registers[inst.dst.ordinal()] = low_byte | (high_byte << 8);
                 break;
-            case OpCodes.STORE:
+            case STORE:
                 byte val_low = (byte) (registers[inst.src.ordinal()] & 0xff);
                 memory.write(registers[inst.dst.ordinal()], val_low);
                 byte val_high = (byte) ((registers[inst.src.ordinal()] >> 8) & 0xff);
                 memory.write(registers[inst.dst.ordinal()] + 1, val_high);
                 break;
-            case OpCodes.ADD:
+            case ADD:
                 registers[inst.dst.ordinal()] = alu.add(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
-            case OpCodes.ADD_IMM:
+            case ADD_IMM:
                 registers[inst.dst.ordinal()] = alu.add(registers[inst.dst.ordinal()], inst.immediate);
                 break;
-            case OpCodes.SUB:
+            case SUB:
                 registers[inst.dst.ordinal()] = alu.sub(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
-            case OpCodes.SUB_IMM:
+            case SUB_IMM:
                 registers[inst.dst.ordinal()] = alu.sub(registers[inst.dst.ordinal()], inst.immediate);
                 break;
-            case OpCodes.OR:
+            case OR:
                 registers[inst.dst.ordinal()] = alu.or(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
-            case OpCodes.OR_IMM:
+            case OR_IMM:
                 registers[inst.dst.ordinal()] = alu.or(registers[inst.dst.ordinal()], registers[inst.immediate]);
                 break;
-            case OpCodes.XOR:
+            case XOR:
                 registers[inst.dst.ordinal()] = alu.xor(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
-            case OpCodes.XOR_IMM:
+            case XOR_IMM:
                 registers[inst.dst.ordinal()] = alu.xor(registers[inst.dst.ordinal()], registers[inst.immediate]);
                 break;
-            case OpCodes.AND:
+            case AND:
                 registers[inst.dst.ordinal()] = alu.and(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
-            case OpCodes.AND_IMM:
+            case AND_IMM:
                 registers[inst.dst.ordinal()] = alu.and(registers[inst.dst.ordinal()], registers[inst.immediate]);
                 break;
-            case OpCodes.CMP:
+            case CMP:
                 alu.cmp(registers[inst.dst.ordinal()], registers[inst.src.ordinal()]);
                 break;
-            case OpCodes.JMP:
+            case JMP:
                 registers[Registers.PC.ordinal()] = inst.immediate;
                 break;
-            case OpCodes.RJMP:
+            case RJMP:
                 registers[Registers.PC.ordinal()] += inst.immediate;
                 break;
-            case OpCodes.BREQ:
+            case BREQ:
                 if (alu.Z) {
                     registers[Registers.PC.ordinal()] = inst.immediate;
                 }
                 break;
-            case OpCodes.BRNE:
+            case BRNE:
                 if (!alu.Z) {
                     registers[Registers.PC.ordinal()] = inst.immediate;
                 }
                 break;
-            case OpCodes.BRLO:
+            case BRLO:
                 if (alu.C) {
                     registers[Registers.PC.ordinal()] = inst.immediate;
                 }
                 break;
-            case OpCodes.BRSH:
+            case BRSH:
                 if (!alu.C) {
                     registers[Registers.PC.ordinal()] = inst.immediate;
                 }
                 break;
-            case OpCodes.BRMI:
+            case BRMI:
                 if (alu.N) {
                     registers[Registers.PC.ordinal()] = inst.immediate;
                 }
                 break;
-            case OpCodes.BRPL:
+            case BRPL:
                 if (!alu.N) {
                     registers[Registers.PC.ordinal()] = inst.immediate;
                 }
                 break;
-            case OpCodes.BRGE:
+            case BRGE:
                 if (!(alu.N ^ alu.V)) {
                     registers[Registers.PC.ordinal()] = inst.immediate;
                 }
                 break;
-            case OpCodes.BRLT:
+            case BRLT:
                 if (alu.N ^ alu.V) {
                     registers[Registers.PC.ordinal()] = inst.immediate;
                 }
                 break;
-            case OpCodes.PUSH:
+            case PUSH:
                 push_stack(inst.immediate);
                 break;
-            case OpCodes.POP:
+            case POP:
                 registers[Registers.SP.ordinal()] += 2;
                 break;
-            case OpCodes.CALL:
+            case CALL:
                 push_stack(registers[Registers.PC.ordinal()]);
                 registers[Registers.PC.ordinal()] = inst.immediate;
                 break;
-            case OpCodes.RET:
+            case RET:
                 int returnAddress = (memory.read(registers[Registers.SP.ordinal()]) & 0xFF)
                         | ((memory.read(registers[Registers.SP.ordinal()] + 1) & 0xFF) << 8);
                 registers[Registers.PC.ordinal()] = returnAddress;

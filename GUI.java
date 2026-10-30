@@ -225,7 +225,7 @@ public class GUI {
 
             int line_no;
             if (CPU.registers[Registers.PC.ordinal()] == code.lines.size()) {
-                line_no = code.lines.getLast();
+                line_no = code.lines.get(code.lines.size() - 1);
             } else {
                 line_no = code.lines.get(CPU.registers[Registers.PC.ordinal()]);
             }
