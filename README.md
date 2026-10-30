@@ -246,6 +246,8 @@ The detailed architecture guide is available in [`docs/architecture.md`](docs/ar
 
 The complete instruction reference is available in [`docs/instruction-set.md`](docs/instruction-set.md).
 
+The beginner-focused assembly guide is available in [`docs/assembly-guide.md`](docs/assembly-guide.md).
+
 ## Project structure
 
 ```text
