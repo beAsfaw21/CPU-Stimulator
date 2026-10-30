@@ -236,7 +236,8 @@ public class GUI {
                     updateRegistersDisplay(previousRegisters, previousZ, previousN, previousC, previousV);
                     updateMemoryDisplay(previousMemory);
                     updateExecutionSummary(code, instruction, sourceLine,
-                            previousRegisters, previousMemory);
+                            previousRegisters, previousMemory, previousZ, previousN,
+                            previousC, previousV);
                 }
 
                 if (iter >= maxSteps) {
@@ -288,7 +289,8 @@ public class GUI {
             updateRegistersDisplay(previousRegisters, previousZ, previousN, previousC, previousV);
             updateMemoryDisplay(previousMemory);
             updateExecutionSummary(code, code.program.get(currentPc),
-                    line_no, previousRegisters, previousMemory);
+                    line_no, previousRegisters, previousMemory, previousZ, previousN,
+                    previousC, previousV);
 
             return line_no;
         } catch (IOException e) {
@@ -414,24 +416,137 @@ public class GUI {
     }
 
     private static void updateExecutionSummary(AsmIR code, Instruction instruction,
-            int sourceLine, int[] previousRegisters, int[] previousMemory) {
+            int sourceLine, int[] previousRegisters, int[] previousMemory,
+            boolean previousZ, boolean previousN, boolean previousC, boolean previousV) {
         if (summaryTextArea == null)
             return;
         StringBuilder summary = new StringBuilder();
-        summary.append("Program assembled: ").append(code.program.size())
-                .append(" instruction(s). ");
-        summary.append("The CPU fetched source line ").append(sourceLine)
-                .append(" and moved PC to ").append(CPU.registers[Registers.PC.ordinal()])
-                .append(".\n\n");
-        summary.append("What just happened: ").append(describeInstruction(instruction)).append("\n");
-        summary.append("Registers changed: ").append(changedRegisters(previousRegisters)).append("\n");
-        summary.append("Memory changed: ").append(changedMemoryAddresses(previousMemory).size())
+        int previousPc = previousRegisters[Registers.PC.ordinal()];
+        int currentPc = CPU.registers[Registers.PC.ordinal()];
+        summary.append("CPU execution lesson\n");
+        summary.append("===================\n");
+        summary.append("The program contains ").append(code.program.size())
+                .append(" assembled instruction(s). This was instruction ")
+                .append(previousPc + 1).append(".\n\n");
+        summary.append("1. FETCH\n");
+        summary.append("The CPU used PC = ").append(previousPc)
+                .append(" to fetch the instruction on source line ")
+                .append(sourceLine).append(".\n\n");
+        summary.append("2. DECODE\n");
+        summary.append("The instruction was decoded as: ")
+                .append(instructionText(instruction)).append(".\n");
+        summary.append("In simple terms: ").append(describeInstruction(instruction)).append("\n\n");
+        summary.append("3. EXECUTE\n");
+        summary.append(executionDetails(instruction, previousRegisters, previousMemory))
+                .append("\n\n");
+        summary.append("CPU state after this instruction:\n");
+        summary.append("- PC: ").append(previousPc).append(" -> ").append(currentPc)
+                .append(" (the next instruction to fetch)\n");
+        summary.append("- Registers changed: ").append(changedRegisters(previousRegisters)).append("\n");
+        summary.append("- Flags: ").append(flagChanges(previousZ, previousN, previousC, previousV))
+                .append("\n");
+        summary.append("- Memory changed: ").append(changedMemoryAddresses(previousMemory).size())
                 .append(" byte(s)");
-        summary.append("\nMemory currently in use: ").append(countUsedMemory())
-                .append(" non-zero byte(s) across 0x0000-0xFFFF.");
-        summary.append("\nStack pointer: 0x")
+        summary.append("\n- Memory in use: ").append(countUsedMemory())
+                .append(" non-zero byte(s) across addresses 0x0000-0xFFFF.");
+        summary.append("\n- Stack pointer: 0x")
                 .append(String.format("%04X", CPU.registers[Registers.SP.ordinal()] & 0xFFFF));
         updateSummary(summary.toString());
+    }
+
+    private static String instructionText(Instruction instruction) {
+        if (instruction == null)
+            return "none";
+        switch (instruction.op) {
+            case MOV:
+                return "MOV " + instruction.dst + ", " + instruction.src;
+            case MOV_IMM:
+                return "MOV " + instruction.dst + ", " + formatValue(instruction.immediate);
+            case LOAD:
+                return "LOAD " + instruction.dst + ", [" + instruction.src + "]";
+            case STORE:
+                return "STORE [" + instruction.dst + "], " + instruction.src;
+            case PUSH:
+                return "PUSH " + formatValue(instruction.immediate);
+            case POP:
+            case RET:
+                return instruction.op.toString();
+            case CALL:
+            case JMP:
+            case RJMP:
+                return instruction.op + " " + instruction.immediate;
+            default:
+                if (instruction.src != null)
+                    return instruction.op + " " + instruction.dst + ", " + instruction.src;
+                return instruction.op + " " + instruction.dst + ", "
+                        + formatValue(instruction.immediate);
+        }
+    }
+
+    private static String executionDetails(Instruction instruction, int[] previousRegisters,
+            int[] previousMemory) {
+        if (instruction == null)
+            return "No instruction was executed.";
+        switch (instruction.op) {
+            case MOV:
+                return instruction.dst + " receives the 16-bit value currently in "
+                        + instruction.src + ": " + formatValue(previousRegisters[instruction.src.ordinal()])
+                        + ".";
+            case MOV_IMM:
+                return "The immediate number is written directly into " + instruction.dst
+                        + ": " + formatValue(instruction.immediate) + ".";
+            case ADD:
+            case SUB:
+            case OR:
+            case XOR:
+            case AND:
+                return instruction.dst + " starts with " + formatValue(
+                        previousRegisters[instruction.dst.ordinal()]) + " and combines it with "
+                        + instruction.src + " = " + formatValue(
+                        previousRegisters[instruction.src.ordinal()]) + " using " + instruction.op + ".";
+            case ADD_IMM:
+            case SUB_IMM:
+            case OR_IMM:
+            case XOR_IMM:
+            case AND_IMM:
+                return instruction.dst + " starts with " + formatValue(
+                        previousRegisters[instruction.dst.ordinal()]) + " and combines it with immediate "
+                        + formatValue(instruction.immediate) + " using " + instruction.op + ".";
+            case LOAD:
+                return "The CPU reads two consecutive bytes from memory using the address in "
+                        + instruction.src + " and combines them into one 16-bit value for "
+                        + instruction.dst + ".";
+            case STORE:
+                return "The CPU splits the 16-bit value in " + instruction.src
+                        + " into low and high bytes and writes them to two consecutive memory addresses.";
+            case PUSH:
+                return "The stack grows downward: SP moves down by two bytes, then the 16-bit value is stored "
+                        + "as low byte followed by high byte.";
+            case POP:
+                return "The CPU removes two bytes from the top of the stack and moves SP up by two bytes.";
+            case CALL:
+                return "The CPU saves the next PC value on the stack, then replaces PC with the subroutine address.";
+            case RET:
+                return "The CPU reads the saved two-byte return address from the stack and places it in PC.";
+            case JMP:
+                return "The CPU replaces PC with absolute instruction address " + instruction.immediate + ".";
+            case RJMP:
+                return "The CPU adds the signed offset " + instruction.immediate
+                        + " to the already advanced PC.";
+            case CMP:
+                return "The CPU subtracts the source from the destination only for comparison; "
+                        + "the register value is not replaced, but the flags are updated.";
+            default:
+                return "The CPU evaluates the condition using the ALU flags and may replace PC with the target.";
+        }
+    }
+
+    private static String flagChanges(boolean previousZ, boolean previousN,
+            boolean previousC, boolean previousV) {
+        return "Z " + previousZ + " -> " + CPU.alu.Z
+                + ", N " + previousN + " -> " + CPU.alu.N
+                + ", C " + previousC + " -> " + CPU.alu.C
+                + ", V " + previousV + " -> " + CPU.alu.V;
     }
 
     private static String describeInstruction(Instruction instruction) {
@@ -655,10 +770,11 @@ public class GUI {
         summaryTextArea.setLineWrap(true);
         summaryTextArea.setWrapStyleWord(true);
         summaryTextArea.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
-        summaryTextArea.setText("Load or type a program, then select Step to see what the CPU does.");
+        summaryTextArea.setText("Load or type a program, then select Step to see the CPU fetch, decode, and execute it.");
         JScrollPane summaryScrollPane = new JScrollPane(summaryTextArea);
         summaryScrollPane.setBorder(BorderFactory.createTitledBorder("Execution summary"));
-        summaryScrollPane.setPreferredSize(new Dimension(0, 170));
+        summaryScrollPane.setMinimumSize(new Dimension(0, 110));
+        summaryScrollPane.setPreferredSize(new Dimension(0, 240));
 
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
@@ -726,8 +842,12 @@ public class GUI {
         toolBar.add(instructionButton);
 
         leftPanel.add(toolBar, BorderLayout.NORTH);
-        leftPanel.add(codeScrollPane, BorderLayout.CENTER);
-        leftPanel.add(summaryScrollPane, BorderLayout.SOUTH);
+        JSplitPane codeSummarySplit = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT, codeScrollPane, summaryScrollPane);
+        codeSummarySplit.setResizeWeight(0.68);
+        codeSummarySplit.setOneTouchExpandable(true);
+        codeSummarySplit.setContinuousLayout(true);
+        leftPanel.add(codeSummarySplit, BorderLayout.CENTER);
         return leftPanel;
     }
 
