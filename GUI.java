@@ -2,6 +2,7 @@ package simulator;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
@@ -10,16 +11,22 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class GUI {
     private static Path currentFilePath;
     private static JTextArea registerTextArea; // Reference to the register display
+    private static JTextArea summaryTextArea;
     private static JTable memoryTable;
+    private static final Set<Integer> changedMemoryAddresses = new HashSet<>();
     private static final int DEFAULT_MAX_STEPS = 200000;
 
     private static final Highlighter.HighlightPainter PAINTER = 
         new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 255, 100));
+    private static final Highlighter.HighlightPainter REGISTER_PAINTER =
+        new DefaultHighlighter.DefaultHighlightPainter(new Color(198, 239, 206));
     // Variable to hold the reference to the currently active highlight
     private static Object currentHighlightTag = null;
 
@@ -36,6 +43,7 @@ public class GUI {
             for (int i = 0; i < DATA_COLUMNS; i++) {
                 columnNames[i + ADDRESS_COLUMN_COUNT] = String.format("+%02X", i * 2);
             }
+
         }
 
         @Override
@@ -67,6 +75,27 @@ public class GUI {
 
                 return String.format("%08X", value);
             }
+        }
+
+    }
+
+    static class MemoryCellRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, column);
+            if (!isSelected && column > 0) {
+                int baseAddress = row * 16;
+                int address = baseAddress + ((column - 1) * 2);
+                if (changedMemoryAddresses.contains(address)
+                        || changedMemoryAddresses.contains(address + 1)) {
+                    component.setBackground(new Color(255, 224, 178));
+                } else {
+                    component.setBackground(Color.WHITE);
+                }
+            }
+            return component;
         }
     }
 
@@ -154,9 +183,11 @@ public class GUI {
         CPU.registers[Registers.SP.ordinal()] = 0xffff;
         CPU.halt = false;
         CPU.alu = new ALU();
+        changedMemoryAddresses.clear();
 
         updateRegistersDisplay();
         updateMemoryDisplay();
+        updateSummary("CPU reset. Registers and memory were cleared; SP was initialized to 0xFFFF.");
     }
 
     private static void runFile(Path path, int maxSteps, int breakpointLine, JTextArea codeArea) {
@@ -176,14 +207,25 @@ public class GUI {
 
                 int iter = 0;
                 while (!CPU.halt && iter++ < maxSteps) {
+                    int currentPc = CPU.registers[Registers.PC.ordinal()];
+                    if (currentPc < 0 || currentPc >= code.program.size()) {
+                        CPU.halt = true;
+                        updateSummary("Execution complete. The program has no instruction at PC "
+                                + currentPc + ".\nMemory currently in use: "
+                                + countUsedMemory() + " non-zero byte(s).");
+                        break;
+                    }
+
                     if (breakpointLine > 0
-                            && CPU.registers[Registers.PC.ordinal()] < code.lines.size()
-                            && code.lines.get(CPU.registers[Registers.PC.ordinal()]) == breakpointLine) {
+                            && code.lines.get(currentPc) == breakpointLine) {
                         highlightLine(codeArea, breakpointLine);
                         return;
                     }
 
+                    Instruction instruction = code.program.get(currentPc);
+                    int sourceLine = code.lines.get(currentPc);
                     int[] previousRegisters = CPU.registers.clone();
+                    int[] previousMemory = snapshotMemory();
                     boolean previousZ = CPU.alu.Z;
                     boolean previousN = CPU.alu.N;
                     boolean previousC = CPU.alu.C;
@@ -192,7 +234,9 @@ public class GUI {
 
                     // Note: This must be run on the EDT, so we call the helper methods
                     updateRegistersDisplay(previousRegisters, previousZ, previousN, previousC, previousV);
-                    updateMemoryDisplay();
+                    updateMemoryDisplay(previousMemory);
+                    updateExecutionSummary(code, instruction, sourceLine,
+                            previousRegisters, previousMemory);
                 }
 
                 if (iter >= maxSteps) {
@@ -222,15 +266,19 @@ public class GUI {
             List<String> lines = Files.readAllLines(path);
             String src = String.join("\n", lines).trim();
             AsmIR code = Assembler.assemble(src);
-
-            int line_no;
-            if (CPU.registers[Registers.PC.ordinal()] == code.lines.size()) {
-                line_no = code.lines.getLast();
-            } else {
-                line_no = code.lines.get(CPU.registers[Registers.PC.ordinal()]);
+            int currentPc = CPU.registers[Registers.PC.ordinal()];
+            if (currentPc < 0 || currentPc >= code.program.size()) {
+                CPU.halt = true;
+                updateSummary("Execution complete. The program has no instruction at PC "
+                        + currentPc + ".\nMemory currently in use: "
+                        + countUsedMemory() + " non-zero byte(s).");
+                return -1;
             }
 
+            int line_no = code.lines.get(currentPc);
+
             int[] previousRegisters = CPU.registers.clone();
+            int[] previousMemory = snapshotMemory();
             boolean previousZ = CPU.alu.Z;
             boolean previousN = CPU.alu.N;
             boolean previousC = CPU.alu.C;
@@ -238,7 +286,9 @@ public class GUI {
             CPU.step(code);
 
             updateRegistersDisplay(previousRegisters, previousZ, previousN, previousC, previousV);
-            updateMemoryDisplay();
+            updateMemoryDisplay(previousMemory);
+            updateExecutionSummary(code, code.program.get(currentPc),
+                    line_no, previousRegisters, previousMemory);
 
             return line_no;
         } catch (IOException e) {
@@ -284,6 +334,7 @@ public class GUI {
             return;
         SwingUtilities.invokeLater(() -> {
             registerTextArea.setText(getRegisters(null, CPU.alu.Z, CPU.alu.N, CPU.alu.C, CPU.alu.V));
+            registerTextArea.getHighlighter().removeAllHighlights();
             registerTextArea.setCaretPosition(0);
         });
     }
@@ -295,8 +346,34 @@ public class GUI {
         SwingUtilities.invokeLater(() -> {
             registerTextArea.setText(getRegisters(previousRegisters, previousZ, previousN,
                     previousC, previousV));
+            highlightChangedRegisterLines(previousRegisters, previousZ, previousN, previousC, previousV);
             registerTextArea.setCaretPosition(0);
         });
+    }
+
+    private static void highlightChangedRegisterLines(int[] previousRegisters, boolean previousZ,
+            boolean previousN, boolean previousC, boolean previousV) {
+        Highlighter highlighter = registerTextArea.getHighlighter();
+        highlighter.removeAllHighlights();
+        for (int i = 0; i < CPU.registers.length; i++) {
+            if (CPU.registers[i] != previousRegisters[i]) {
+                highlightRegisterLine(highlighter, i);
+            }
+        }
+        if (CPU.alu.Z != previousZ || CPU.alu.N != previousN
+                || CPU.alu.C != previousC || CPU.alu.V != previousV) {
+            highlightRegisterLine(highlighter, CPU.registers.length + 1);
+        }
+    }
+
+    private static void highlightRegisterLine(Highlighter highlighter, int lineNumber) {
+        try {
+            int start = registerTextArea.getLineStartOffset(lineNumber);
+            int end = registerTextArea.getLineEndOffset(lineNumber);
+            highlighter.addHighlight(start, end, REGISTER_PAINTER);
+        } catch (BadLocationException ignored) {
+            // The display is rebuilt immediately before highlighting.
+        }
     }
     
     public static void updateMemoryDisplay() {
@@ -304,6 +381,124 @@ public class GUI {
             return;
         SwingUtilities.invokeLater(() -> {
             ((MemoryGridModel) memoryTable.getModel()).fireTableDataChanged();
+        });
+    }
+
+    private static void updateMemoryDisplay(int[] previousMemory) {
+        if (memoryTable == null)
+            return;
+        Set<Integer> changed = changedMemoryAddresses(previousMemory);
+        SwingUtilities.invokeLater(() -> {
+            changedMemoryAddresses.clear();
+            changedMemoryAddresses.addAll(changed);
+            ((MemoryGridModel) memoryTable.getModel()).fireTableDataChanged();
+        });
+    }
+
+    private static int[] snapshotMemory() {
+        int[] snapshot = new int[0x10000];
+        for (int address = 0; address < snapshot.length; address++) {
+            snapshot[address] = CPU.memory.read(address) & 0xFF;
+        }
+        return snapshot;
+    }
+
+    private static Set<Integer> changedMemoryAddresses(int[] previousMemory) {
+        Set<Integer> changed = new HashSet<>();
+        for (int address = 0; address < previousMemory.length; address++) {
+            if (previousMemory[address] != (CPU.memory.read(address) & 0xFF)) {
+                changed.add(address);
+            }
+        }
+        return changed;
+    }
+
+    private static void updateExecutionSummary(AsmIR code, Instruction instruction,
+            int sourceLine, int[] previousRegisters, int[] previousMemory) {
+        if (summaryTextArea == null)
+            return;
+        StringBuilder summary = new StringBuilder();
+        summary.append("Program assembled: ").append(code.program.size())
+                .append(" instruction(s). ");
+        summary.append("The CPU fetched source line ").append(sourceLine)
+                .append(" and moved PC to ").append(CPU.registers[Registers.PC.ordinal()])
+                .append(".\n\n");
+        summary.append("What just happened: ").append(describeInstruction(instruction)).append("\n");
+        summary.append("Registers changed: ").append(changedRegisters(previousRegisters)).append("\n");
+        summary.append("Memory changed: ").append(changedMemoryAddresses(previousMemory).size())
+                .append(" byte(s)");
+        summary.append("\nMemory currently in use: ").append(countUsedMemory())
+                .append(" non-zero byte(s) across 0x0000-0xFFFF.");
+        summary.append("\nStack pointer: 0x")
+                .append(String.format("%04X", CPU.registers[Registers.SP.ordinal()] & 0xFFFF));
+        updateSummary(summary.toString());
+    }
+
+    private static String describeInstruction(Instruction instruction) {
+        if (instruction == null)
+            return "No instruction was executed.";
+        switch (instruction.op) {
+            case MOV:
+                return "Copied " + instruction.src + " into " + instruction.dst + ".";
+            case MOV_IMM:
+                return "Stored immediate value " + formatValue(instruction.immediate)
+                        + " in " + instruction.dst + ".";
+            case LOAD:
+                return "Loaded a 16-bit value from memory addressed by " + instruction.src
+                        + " into " + instruction.dst + ".";
+            case STORE:
+                return "Stored the 16-bit value from " + instruction.src
+                        + " into memory addressed by " + instruction.dst + ".";
+            case PUSH:
+                return "Pushed " + formatValue(instruction.immediate) + " onto the stack.";
+            case POP:
+                return "Removed the top 16-bit value from the stack.";
+            case CALL:
+                return "Saved the return address on the stack and called address "
+                        + instruction.immediate + ".";
+            case RET:
+                return "Restored the return address from the stack.";
+            case JMP:
+                return "Jumped to instruction address " + instruction.immediate + ".";
+            case RJMP:
+                return "Moved the program counter by " + instruction.immediate + ".";
+            default:
+                return "Performed " + instruction.op + " and updated the ALU flags.";
+        }
+    }
+
+    private static String formatValue(int value) {
+        return String.format("0x%04X (%d)", value & 0xFFFF, value);
+    }
+
+    private static String changedRegisters(int[] previousRegisters) {
+        StringBuilder changed = new StringBuilder();
+        for (int i = 0; i < CPU.registers.length; i++) {
+            if (CPU.registers[i] != previousRegisters[i]) {
+                if (changed.length() > 0)
+                    changed.append(", ");
+                changed.append(Registers.values()[i]).append(" -> ")
+                        .append(formatValue(CPU.registers[i]));
+            }
+        }
+        return changed.length() == 0 ? "none" : changed.toString();
+    }
+
+    private static int countUsedMemory() {
+        int used = 0;
+        for (int address = 0; address < 0x10000; address++) {
+            if ((CPU.memory.read(address) & 0xFF) != 0)
+                used++;
+        }
+        return used;
+    }
+
+    private static void updateSummary(String message) {
+        if (summaryTextArea == null)
+            return;
+        SwingUtilities.invokeLater(() -> {
+            summaryTextArea.setText(message);
+            summaryTextArea.setCaretPosition(0);
         });
     }
 
@@ -426,6 +621,7 @@ public class GUI {
         MemoryGridModel memoryModel = new MemoryGridModel();
         JTable memoryTableInstance = new JTable(memoryModel); // Instantiate table
         memoryTableInstance.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        memoryTableInstance.setDefaultRenderer(Object.class, new MemoryCellRenderer());
 
         // Store static references
         memoryTable = memoryTableInstance;
@@ -454,6 +650,15 @@ public class GUI {
         codeArea.setText("; Load a file using the 'Open' button or edit this file, save, and run!");
         JScrollPane codeScrollPane = new JScrollPane(codeArea);
         codeScrollPane.setBorder(BorderFactory.createTitledBorder("Instructions"));
+        summaryTextArea = new JTextArea(8, 20);
+        summaryTextArea.setEditable(false);
+        summaryTextArea.setLineWrap(true);
+        summaryTextArea.setWrapStyleWord(true);
+        summaryTextArea.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+        summaryTextArea.setText("Load or type a program, then select Step to see what the CPU does.");
+        JScrollPane summaryScrollPane = new JScrollPane(summaryTextArea);
+        summaryScrollPane.setBorder(BorderFactory.createTitledBorder("Execution summary"));
+        summaryScrollPane.setPreferredSize(new Dimension(0, 170));
 
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
@@ -522,6 +727,7 @@ public class GUI {
 
         leftPanel.add(toolBar, BorderLayout.NORTH);
         leftPanel.add(codeScrollPane, BorderLayout.CENTER);
+        leftPanel.add(summaryScrollPane, BorderLayout.SOUTH);
         return leftPanel;
     }
 
