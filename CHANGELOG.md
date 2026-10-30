@@ -30,6 +30,7 @@ No changes yet.
 - Documentation index
 - Makefile with common build, test, run, and clean commands
 - EditorConfig formatting rules
+- Support and question-reporting guidance
 
 [Unreleased]: https://github.com/beAsfaw21/CPU-Stimulator/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/beAsfaw21/CPU-Stimulator/releases/tag/v1.0.0

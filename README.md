@@ -18,6 +18,7 @@ The project provides a custom assembler, a 16-bit CPU model, an arithmetic logic
 - [Changelog](#changelog)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
+- [Support](#support)
 - [Author](#author)
 - [License](#license)
 
@@ -361,6 +362,10 @@ Contributions are welcome.
 6. Open a pull request with a clear description of the change.
 
 Please keep changes focused and add tests for new assembler or CPU behavior where appropriate.
+
+## Support
+
+See [SUPPORT.md](SUPPORT.md) for guidance on asking questions, reporting bugs, requesting features, and handling security issues.
 
 ## Author
 
