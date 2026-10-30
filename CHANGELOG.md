@@ -7,6 +7,10 @@ The version format follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+No changes yet.
+
+## [1.0.0] - 2026-10-30
+
 ### Added
 
 - MIT license
@@ -20,3 +24,6 @@ The version format follows [Semantic Versioning](https://semver.org/).
 - Beginner-friendly project documentation
 - Additional assembler and CPU tests
 - Correct `CALL` and `RET` subroutine execution
+
+[Unreleased]: https://github.com/beAsfaw21/CPU-Stimulator/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/beAsfaw21/CPU-Stimulator/releases/tag/v1.0.0
