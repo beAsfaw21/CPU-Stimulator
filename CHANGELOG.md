@@ -28,6 +28,7 @@ No changes yet.
 - Beginner-focused assembly language guide
 - Contributor-focused development guide
 - Documentation index
+- Sample-program guide with expected results and learning order
 - Makefile with common build, test, run, and clean commands
 - EditorConfig formatting rules
 - Support and question-reporting guidance

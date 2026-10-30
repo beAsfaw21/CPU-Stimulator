@@ -42,6 +42,7 @@ Explains how to build, test, extend, and contribute to the project. It includes 
 
 Runnable assembly examples are available in the repository's [`samples/`](../samples/) directory:
 
+- See [`samples/README.md`](../samples/README.md) for running instructions and a recommended learning order.
 - [`addition.asm`](../samples/addition.asm)
 - [`branching.asm`](../samples/branching.asm)
 - [`fibonacci.asm`](../samples/fibonacci.asm)
