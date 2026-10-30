@@ -1,112 +1,106 @@
 # 16-bit CPU Simulator
 
-<div align="center">
+A Java-based educational simulator for exploring CPU architecture, assembly language, and the fetch-decode-execute cycle.
 
-### Build a tiny computer. Watch every instruction come alive.
+The project provides a custom assembler, a 16-bit CPU model, an arithmetic logic unit (ALU), simulated memory, a stack, a Swing GUI, and a lightweight test suite.
 
-An approachable Java project that turns CPU architecture into something you can **run, pause, inspect, and understand**.
+## Table of contents
 
-[![Java](https://img.shields.io/badge/Java-17%2B-orange?logo=openjdk)](https://www.oracle.com/java/technologies/downloads/)
-[![Tests](https://img.shields.io/badge/tests-9%20passing-brightgreen)](#run-the-tests)
-[![License](https://img.shields.io/badge/license-not%20specified-lightgrey)](#license)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Assembly language](#assembly-language)
+- [CPU architecture](#cpu-architecture)
+- [Project structure](#project-structure)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [Author](#author)
+- [License](#license)
 
-</div>
+## Features
 
----
+- 16-bit registers and arithmetic
+- Custom two-pass assembler with label resolution
+- Decimal, hexadecimal, binary, and negative immediate values
+- General-purpose registers, program counter, and stack pointer
+- Arithmetic operations: addition and subtraction
+- Logical operations: OR, AND, and XOR
+- Comparison and conditional branching
+- 60 KiB of general-purpose memory and a 4 KiB stack
+- Little-endian 16-bit load and store operations
+- Stack operations and subroutine calls
+- Swing GUI with:
+  - Assembly source editor
+  - Open and save controls
+  - Run, step, and stop controls
+  - Current source-line highlighting
+  - Register display
+  - Memory viewer and hexadecimal address search
+- Tests for the assembler, ALU, CPU, memory, stack, branches, and Fibonacci execution
 
-## What is this?
+## Requirements
 
-Most computers hide their inner workings behind layers of software. This project removes those layers and gives you a small computer you can explore.
+- Java Development Kit (JDK) 17 or newer
+- A graphical desktop environment for the Swing interface
 
-You write a few lines of assembly. The simulator then:
+The project has no external dependencies and does not require Maven or Gradle.
 
-1. **Assembles** your text into instructions.
-2. **Fetches** one instruction using the program counter.
-3. **Decodes** what that instruction means.
-4. **Executes** it using registers, the ALU, memory, or the stack.
-5. **Shows the result** in a visual Swing interface.
+## Installation
 
-It is a great starting point for learning assembly language, CPU design, interpreters, debugging, and the fetch-decode-execute cycle.
-
-## See it in action
-
-The GUI gives you a small laboratory for computer architecture:
-
-- Edit or open an assembly program.
-- Click **Step** to execute one instruction.
-- Click **Run** to execute the program.
-- Click **Stop** to halt execution.
-- Watch registers and ALU flags change.
-- Browse memory as 16-bit little-endian values.
-- Search for a memory address in hexadecimal.
-- See the current source line highlighted while stepping.
-
-No Maven, Gradle, external libraries, or complex setup is required.
-
-## Quick start: from zero to running CPU
-
-### 1. Install Java
-
-Install **JDK 17 or newer**. Verify that Java is available:
-
-```bash
-java -version
-javac -version
-```
-
-### 2. Clone the project
+Clone the repository:
 
 ```bash
 git clone https://github.com/beAsfaw21/CPU-Stimulator.git
 cd CPU-Stimulator
 ```
 
-### 3. Compile it
-
-The source files use the `simulator` Java package, so compile them into a package-aware output folder:
+Compile the source files into an output directory:
 
 ```bash
 mkdir out
 javac -d out *.java
 ```
 
-### 4. Launch the visual simulator
+The `-d out` option is required because the Java source files belong to the `simulator` package.
+
+## Usage
+
+### Start the graphical interface
 
 ```bash
 java -cp out simulator.GUI
 ```
 
-When the window opens, create or open a source file, save it, and then choose **Run** or **Step**. The GUI runs saved source files, so use **Save** before executing code typed directly into the editor.
+The GUI starts with an empty editor. You can either open an existing assembly file or type a program directly into the editor.
 
-### 5. Run the tests
+To execute a program:
 
-```bash
-java -cp out simulator.TestRunner
-```
+1. Type or open assembly source.
+2. Select **Save** if you edited the source in the application.
+3. Select **Step** to execute one instruction.
+4. Select **Run** to execute the program continuously.
+5. Select **Stop** to halt execution.
+6. Inspect the registers and memory after execution.
 
-Expected result:
+The current source line is highlighted while stepping. The memory search field accepts hexadecimal addresses without the `0x` prefix.
 
-```text
---------------------------------------------------
-Ran 9 tests, failures: 0
-```
+### Run a small program
 
-## Your first program
-
-Try this tiny program. It puts two numbers into registers and adds them:
+The following program adds `7` and `5`:
 
 ```asm
-; first-program.asm
 mov r0, #7
 mov r1, #5
 add r0, r1
 ```
 
-After running it, `R0` contains `12`.
+After execution, register `R0` contains `12`.
 
-### A more interesting example: Fibonacci
+### Run a loop
 
-This program calculates Fibonacci values in a loop. The final value in `R2` is `89`:
+This example calculates a Fibonacci value:
 
 ```asm
 mov r0, #0       ; previous value
@@ -122,53 +116,15 @@ mov r3, #10      ; loop counter
     brne .loop
 ```
 
-Use **Step** repeatedly and observe how the loop, registers, program counter, and flags work together.
+After execution, `R2` contains `89`.
 
-## A beginner's mental model
+## Assembly language
 
-| CPU idea | In this simulator |
-| --- | --- |
-| Register | A tiny, fast storage location such as `R0` or `R1` |
-| ALU | The calculator that performs arithmetic and logic |
-| `PC` | The address of the next instruction |
-| `SP` | The top of the downward-growing stack |
-| Memory | Byte-addressable storage for data |
-| Instruction | A single operation the CPU can perform |
-| Label | A readable name for an instruction address |
-| Flag | A yes/no result used by conditional branches |
+Assembly instructions are case-insensitive. Operands can be separated with commas or whitespace. Comments begin with a semicolon (`;`).
 
-### Registers
+### Immediate values
 
-The CPU currently exposes these general-purpose registers: `R0` through `R21`, and `R23` through `R31`, plus:
-
-- `PC` — program counter
-- `SP` — stack pointer, initialized to `0xFFFF`
-
-### ALU flags
-
-Arithmetic and logic operations update four flags:
-
-- `Z` (**zero**) — the result is zero
-- `N` (**negative**) — the result's high bit is set
-- `C` (**carry**) — an addition carried out or a subtraction borrowed
-- `V` (**overflow**) — signed arithmetic overflowed
-
-`cmp` performs a comparison by updating flags without changing either register. Branches such as `breq` and `brne` read those flags.
-
-### Memory and the stack
-
-The address space is 64 KiB:
-
-- `0x0000` to `0xEFFF` — 60 KiB of general RAM
-- `0xF000` to `0xFFFF` — 4 KiB stack
-
-Words are stored **little-endian**: the low byte comes first, followed by the high byte.
-
-## Assembly language, explained
-
-Instructions are case-insensitive. Separate operands with commas or whitespace. Comments start with `;`.
-
-Immediate values begin with `#`:
+Immediate values must begin with `#`:
 
 ```asm
 mov r0, #42        ; decimal
@@ -177,13 +133,22 @@ mov r2, #0b101010  ; binary
 sub r2, #-1        ; negative decimal
 ```
 
-Labels can stand alone or share a line with an instruction:
+### Labels
+
+Labels identify instruction addresses and can be used by jump and branch instructions:
 
 ```asm
 start:
     mov r0, #1
     jmp done
 
+done:
+    mov r1, #2
+```
+
+Labels may also appear before an instruction on the same line:
+
+```asm
 done: mov r1, #2
 ```
 
@@ -196,104 +161,158 @@ done: mov r1, #2
 | Arithmetic | `add`, `sub` | `add r0, r1`, `sub r0, #1` |
 | Logic | `or`, `and`, `xor` | `xor r0, r1`, `and r0, #0xFF` |
 | Comparison | `cmp` | `cmp r0, r1` |
-| Jumps | `jmp`, `rjmp` | `jmp start`, `rjmp #-2` |
-| Conditional branches | `breq`, `brne`, `brlo`, `brsh`, `brmi`, `brpl`, `brge`, `brlt` | `brne loop` |
+| Unconditional control flow | `jmp`, `rjmp` | `jmp start`, `rjmp #-2` |
+| Conditional control flow | `breq`, `brne`, `brlo`, `brsh`, `brmi`, `brpl`, `brge`, `brlt` | `brne loop` |
 | Stack | `push`, `pop` | `push #0x1234`, `pop` |
 | Subroutines | `call`, `ret` | `call function`, `ret` |
 
-`ld` and `st` transfer a 16-bit value using an address held in a register. `push` accepts an immediate value; `pop` advances the stack pointer.
+`cmp` updates the ALU flags without modifying either operand. Conditional branches use those flags.
 
-## How the project is organized
+`ld` loads a 16-bit value from the address in a register. `st` stores a 16-bit value at the address in a register. Both instructions use little-endian byte order.
+
+## CPU architecture
+
+### Components
+
+| Component | Description |
+| --- | --- |
+| CPU | Fetches, decodes, and executes assembled instructions |
+| Assembler | Converts assembly source into an executable intermediate representation |
+| ALU | Performs arithmetic and logical operations and updates status flags |
+| Memory | Stores bytes in general RAM and the stack region |
+| Registers | Store operands, results, the program counter, and the stack pointer |
+| GUI | Displays source code, execution state, registers, and memory |
+
+### Registers
+
+The CPU exposes these general-purpose registers:
+
+- `R0` through `R21`
+- `R23` through `R31`
+- `PC` — program counter
+- `SP` — stack pointer
+
+The current implementation does not define `R22`.
+
+`SP` starts at `0xFFFF` and the stack grows downward. `PC` identifies the next instruction to execute.
+
+### ALU flags
+
+The ALU maintains four flags:
+
+- `Z` — set when the result is zero
+- `N` — set when the result has its sign bit set
+- `C` — set when an addition produces a carry or a subtraction produces a borrow
+- `V` — set when signed arithmetic overflows
+
+### Memory map
+
+The simulator provides a 64 KiB address space:
+
+| Address range | Purpose |
+| --- | --- |
+| `0x0000`–`0xEFFF` | 60 KiB of general-purpose RAM |
+| `0xF000`–`0xFFFF` | 4 KiB stack |
+
+16-bit words are stored in little-endian order: the lower byte is stored at the lower address.
+
+## Project structure
 
 ```text
 .
-├── ALU.java           The calculator: arithmetic, logic, and flags
-├── Assembler.java     Two-pass parser and label resolver
-├── CPU.java           Fetch-decode-execute loop and stack behavior
-├── GUI.java           Swing editor, controls, registers, and memory view
-├── Instruction.java   Parsed instruction data structures
-├── Memory.java        RAM and stack implementation
-├── TestALU.java       ALU tests
-├── TestAssembler.java Assembler and label tests
-├── TestCPU.java       CPU integration tests
-└── TestRunner.java    Lightweight test runner
+├── ALU.java            Arithmetic, logic, and status flags
+├── Assembler.java      Two-pass parser and label resolver
+├── CPU.java            Instruction execution and stack behavior
+├── GUI.java            Swing interface and execution controls
+├── Instruction.java    Instruction and assembler data structures
+├── Memory.java         RAM and stack implementation
+├── TestALU.java        ALU tests
+├── TestAssembler.java  Assembler tests
+├── TestCPU.java        CPU integration tests
+└── TestRunner.java     Test runner and assertions
 ```
 
-The assembler performs two passes: it first records label addresses, then converts each source line into the executable intermediate representation used by the CPU.
+## Testing
 
-## Run the tests
-
-The repository includes tests for:
-
-- Binary, hexadecimal, decimal, and negative immediates
-- Label resolution
-- Addition overflow and subtraction borrow
-- Register arithmetic
-- Little-endian load/store behavior
-- Push/pop stack behavior
-- Conditional branches
-- A complete Fibonacci program
-
-Run them after compiling:
+Run the complete test suite:
 
 ```bash
 java -cp out simulator.TestRunner
 ```
 
-The process exits with status `1` if any test fails, so it can also be used in scripts and continuous integration.
+The test suite covers:
+
+- Immediate values in binary, hexadecimal, decimal, and negative form
+- Label definition and resolution
+- Addition overflow
+- Subtraction borrow
+- Register arithmetic
+- Little-endian load and store behavior
+- Push and pop operations
+- Conditional branches
+- Fibonacci execution
+
+The process exits with status `1` when one or more tests fail.
 
 ## Troubleshooting
 
 ### `Could not find or load main class simulator.GUI`
 
-Compile with `-d out` and run with `-cp out`:
+Recompile using the package-aware output directory:
 
 ```bash
 javac -d out *.java
 java -cp out simulator.GUI
 ```
 
-### The GUI says no file is available
+### The GUI does not run my edited program
 
-Save the text in the editor first. The **Run** and **Step** controls execute the currently saved file.
+Save the source using the **Save** button before selecting **Run** or **Step**. The GUI executes the currently saved file.
 
-### A program runs forever
+### A program does not stop
 
-Use **Stop**, or add a terminating condition. A loop usually needs a counter and a conditional branch:
+Use the **Stop** button or add a terminating branch condition. For example:
 
 ```asm
 mov r0, #3
+
 loop:
     sub r0, #1
     brne loop
 ```
 
-### An assembly line fails
+### An assembly instruction is rejected
 
-Check that:
+Check the following:
 
-- Registers are written as `r0` through `r31`, `pc`, or `sp`.
-- Immediate values start with `#`.
-- `ret` has no operand.
-- `push` receives an immediate value.
-- Labels are spelled consistently.
+- Use registers defined by the simulator.
+- Prefix immediate values with `#`.
+- Use `ret` without operands.
+- Use an immediate value with `push`.
+- Check label spelling and capitalization.
+- Ensure each instruction has the required number of operands.
 
-## Why use this project?
+## Contributing
 
-This is more than a calculator with registers. It is a compact playground for understanding the ideas behind real processors:
+Contributions are welcome.
 
-- How source code becomes executable instructions
-- How a program counter controls execution
-- How registers and memory exchange data
-- How flags make decisions possible
-- How a stack supports temporary values and subroutines
-- How a debugger reveals machine state
+1. Fork the repository.
+2. Create a feature branch:
 
-If you are new to computer architecture, start with the first program, click **Step**, and watch `R0`, `PC`, and the flags change. That one experiment explains more than a page of theory.
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+
+3. Make focused changes.
+4. Compile the project and run the test suite.
+5. Update the README when behavior or usage changes.
+6. Open a pull request with a clear description of the change.
+
+Please keep changes focused and add tests for new assembler or CPU behavior where appropriate.
 
 ## Author
 
-**Befekadu Asfaw Tilahun**  
+Befekadu Asfaw Tilahun
 Electrical and Computer Engineering student, AAiT
 
 ## License
