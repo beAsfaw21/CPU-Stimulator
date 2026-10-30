@@ -16,6 +16,7 @@ public class GUI {
     private static Path currentFilePath;
     private static JTextArea registerTextArea; // Reference to the register display
     private static JTable memoryTable;
+    private static final int DEFAULT_MAX_STEPS = 200000;
 
     private static final Highlighter.HighlightPainter PAINTER = 
         new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 255, 100));
@@ -396,8 +397,17 @@ public class GUI {
         toolBar.add(stepCodeButton);
 
         JButton runButton = new JButton("▶ Run");
-        runButton.addActionListener(e -> runFile(currentFilePath, 200000));
+        JSpinner maxStepsSpinner = new JSpinner(
+                new SpinnerNumberModel(DEFAULT_MAX_STEPS, 1, 10000000, 1000));
+        maxStepsSpinner.setToolTipText("Maximum instructions before execution stops");
+        JLabel maxStepsLabel = new JLabel("Max steps:");
+        runButton.addActionListener(e -> {
+            int maxSteps = (Integer) maxStepsSpinner.getValue();
+            runFile(currentFilePath, maxSteps);
+        });
         toolBar.add(runButton);
+        toolBar.add(maxStepsLabel);
+        toolBar.add(maxStepsSpinner);
 
         JButton stopButton = new JButton("⏹ Stop");
         stopButton.addActionListener(e -> {

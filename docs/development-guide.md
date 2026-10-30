@@ -168,7 +168,8 @@ When changing GUI behavior:
 4. Save the file.
 5. Test **Step**, **Run**, and **Stop** where relevant.
 6. Test **Reset** when changing execution-state behavior.
-7. Confirm source highlighting, register display, and memory display remain consistent.
+7. Test the **Max steps** control when changing execution limits.
+8. Confirm source highlighting, register display, and memory display remain consistent.
 
 The GUI executes saved source files. Changes typed into the editor must be saved before running or stepping.
 

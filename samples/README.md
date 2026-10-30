@@ -17,6 +17,7 @@ In the GUI:
 2. Choose a file from this directory.
 3. Select **Save** if you edit the program.
 4. Select **Step** to execute one instruction at a time, or **Run** to execute the program.
+5. Adjust **Max steps** when testing loops or programs that may not halt.
 
 If GNU Make is available, you can start the GUI with:
 
