@@ -12,13 +12,13 @@ This roadmap describes possible future improvements for the 16-bit CPU Simulator
 - Sample assembly programs
 - Automated tests and GitHub Actions validation
 - Explicit validation for invalid memory addresses
+- Clear GUI errors for file, assembly, execution, and step-limit failures
 - Contributor, support, security, and documentation guidance
 
 ## Near-term improvements
 
 - Add tests for every conditional branch instruction
 - Add tests for `CALL` and `RET` edge cases
-- Add clearer GUI error messages for assembly failures
 - Add a GUI reset control for restarting a program without reopening the file
 - Add an option to configure the maximum number of execution steps
 

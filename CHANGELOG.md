@@ -35,6 +35,7 @@ No changes yet.
 - Expanded conditional-branch test coverage
 - Added nested subroutine and return-address tests
 - Explicit memory-address validation and boundary tests
+- Clearer GUI errors for file, assembly, execution, and step-limit failures
 - Makefile with common build, test, run, and clean commands
 - EditorConfig formatting rules
 - Support and question-reporting guidance

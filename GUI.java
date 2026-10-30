@@ -183,13 +183,17 @@ public class GUI {
                 }
 
                 if (iter >= maxSteps) {
-                    System.err.println("Program exceeded max steps: " + maxSteps);
+                    showError(null, "Execution Error",
+                            "Program exceeded the maximum step count of " + maxSteps
+                                    + ". Check for an infinite loop.");
                 }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, e.getMessage(), "Runtime Error",
-                        JOptionPane.ERROR_MESSAGE);
-
-                e.printStackTrace();
+            } catch (IOException e) {
+                showError(null, "File Error", "Could not read " + path.getFileName()
+                        + ":\n" + e.getMessage());
+            } catch (IllegalArgumentException e) {
+                showError(null, "Assembly Error", e.getMessage());
+            } catch (RuntimeException e) {
+                showError(null, "Runtime Error", e.getMessage());
             }
         }).start(); // Start the run on a separate thread
     }
@@ -219,13 +223,23 @@ public class GUI {
             updateMemoryDisplay();
 
             return line_no;
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(parentComponent, e.getMessage(), "Runtime Error",
-                    JOptionPane.ERROR_MESSAGE);
-
-            e.printStackTrace();
+        } catch (IOException e) {
+            showError(parentComponent, "File Error",
+                    "Could not read " + path.getFileName() + ":\n" + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            showError(parentComponent, "Assembly Error", e.getMessage());
+        } catch (RuntimeException e) {
+            showError(parentComponent, "Runtime Error", e.getMessage());
         }
         return -1;
+    }
+
+    private static void showError(Component parentComponent, String title, String message) {
+        String displayMessage = (message == null || message.isBlank())
+                ? "The operation failed without a detailed error message."
+                : message;
+        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+                parentComponent, displayMessage, title, JOptionPane.ERROR_MESSAGE));
     }
 
     private static String getRegisters() {
