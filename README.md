@@ -1,52 +1,176 @@
-16-bit CPU Architecture Simulator
-A functional, software-based simulation of a 16-bit Central Processing Unit (CPU) developed in Java. This project demonstrates the fundamental principles of computer architecture, including instruction fetching, decoding, and execution.
+# 16-bit CPU Simulator
 
-## Project Overview
-This simulator mimics the behavior of a physical processor. It includes a custom Instruction Set Architecture (ISA) and manages data flow between the Arithmetic Logic Unit (ALU), general-purpose registers, and simulated memory.
+A small, educational 16-bit CPU implemented in Java. The project includes a custom assembly language, a two-pass assembler, an executable CPU model, an ALU with processor flags, simulated memory, and a Swing-based debugger-style interface.
 
-## Key Features
-16-bit Data Path: Processes data in 16-bit increments.
+The simulator is designed to make the fetch-decode-execute cycle visible and easy to experiment with. Assembly programs can be edited, assembled, stepped through, and inspected while register and memory state changes.
 
-Custom ALU: Supports core operations including Addition, Subtraction, AND, OR, and NOT, with dedicated status flags (Zero, Carry).
+## Features
 
-Register File: Includes a set of general-purpose registers and a Program Counter (PC).
+- **16-bit execution** with 16-bit registers and arithmetic results.
+- **Custom assembler** with labels, comments, decimal/hexadecimal/binary immediates, and case-insensitive mnemonics.
+- **ALU operations** for addition, subtraction, comparison, bitwise OR/AND/XOR, and status flags.
+- **Control flow** with absolute jumps, relative jumps, conditional branches, subroutine calls, and returns.
+- **Memory model** with 60 KiB of general RAM and a 4 KiB stack region.
+- **Little-endian word access** for `ld` and `st` instructions.
+- **Interactive Swing GUI** for opening assembly files, running or stepping programs, viewing registers, and browsing memory.
+- **Built-in tests** covering the assembler, ALU, CPU execution, memory access, stack operations, branching, and a Fibonacci program.
 
-Instruction Set: A custom-designed ISA for memory manipulation, arithmetic, and logical branching.
+## Architecture
 
-OOP Design: Built using clean Object-Oriented Programming principles in Java for modularity and scalability.
+The simulator is split into focused components:
 
-## Architecture Components
-ALU (Arithmetic Logic Unit): The "brain" that handles all mathematical and logical computations.
+| Component | Responsibility |
+| --- | --- |
+| `CPU` | Fetches instructions, updates the program counter, executes operations, and manages the stack |
+| `Assembler` | Converts assembly source into an intermediate representation in two passes |
+| `ALU` | Performs arithmetic and logical operations and updates `Z`, `N`, `C`, and `V` flags |
+| `Memory` | Provides byte-addressable RAM and stack storage |
+| `Instruction` / `AsmIR` | Represent parsed instructions, source-line mappings, and resolved labels |
+| `GUI` | Provides source editing, execution controls, register display, and memory inspection |
+| `TestRunner` | Runs the project’s lightweight test suite without an external test framework |
 
-Control Unit: Decodes opcodes and coordinates the timing of the fetch-decode-execute cycle.
+### Registers and flags
 
-Memory Simulation: A simulated RAM environment used for loading instructions and storing data.
+The CPU exposes general-purpose registers (`R0` through `R31`), a program counter (`PC`), and a stack pointer (`SP`). The stack pointer starts at `0xFFFF` and grows downward.
 
-Registers: High-speed storage locations for immediate operand access.
+ALU operations update these flags:
 
-## Technologies Used
-Language: Java
+- `Z` — result is zero
+- `N` — result has its sign bit set
+- `C` — carry or borrow occurred
+- `V` — signed arithmetic overflow occurred
 
-Paradigm: Object-Oriented Programming (OOP)
+Memory addresses from `0x0000` through `0xEFFF` are general RAM. Addresses from `0xF000` through `0xFFFF` are reserved for the stack.
 
-Tools: Java Streams, Collections API
+## Assembly language
 
-## How to Run
-Ensure you have JDK 8 or higher installed.
+Assembly is one instruction per line. Commas and whitespace may be used as separators, and comments begin with `;`.
+
+Immediate values must start with `#`:
+
+```asm
+mov r0, #10       ; decimal
+mov r1, #0x1234   ; hexadecimal
+mov r2, #0b1010   ; binary
+sub r2, #-1       ; signed decimal
+```
+
+Labels can be placed on their own line or before an instruction:
+
+```asm
+mov r0, #0
+mov r1, #1
+mov r3, #10
+
+.loop:
+    mov r2, r0
+    add r2, r1
+    mov r0, r1
+    mov r1, r2
+    sub r3, #1
+    brne .loop
+```
+
+### Instruction reference
+
+| Category | Instructions | Operand form |
+| --- | --- | --- |
+| Data movement | `mov` | `mov register, register` or `mov register, #value` |
+| Memory | `ld`, `st` | `ld destination, address-register`; `st address-register, source` |
+| Arithmetic | `add`, `sub` | `operation destination, register` or `operation destination, #value` |
+| Logic | `or`, `and`, `xor` | `operation destination, register` or `operation destination, #value` |
+| Comparison | `cmp` | `cmp register, register` |
+| Unconditional control flow | `jmp`, `rjmp` | `operation label` or `operation #value` |
+| Conditional control flow | `breq`, `brne`, `brlo`, `brsh`, `brmi`, `brpl`, `brge`, `brlt` | `operation label` or `operation #value` |
+| Stack | `push`, `pop` | `push #value`; `pop` |
+| Subroutines | `call`, `ret` | `call label` or `call #value`; `ret` |
+
+`cmp` updates the ALU flags without storing a result. Conditional branches use those flags. `ld` and `st` transfer 16-bit values as two adjacent bytes in little-endian order.
+
+## Requirements
+
+- Java Development Kit (JDK) **17 or newer**
+- A graphical desktop environment to run the Swing interface
+
+No external libraries or build tools are required.
+
+## Getting started
 
 Clone the repository:
 
-Bash
-git clone https://github.com/your-username/cpu-simulator.git
-Compile the source files:
+```bash
+git clone https://github.com/beAsfaw21/CPU-Stimulator.git
+cd CPU-Stimulator
+```
 
-Bash
-javac *.java
-Run the main simulator class:
+Compile the sources into a separate package-aware output directory:
 
-Bash
-java Main
+```bash
+mkdir out
+javac -d out *.java
+```
+
+### Run the graphical simulator
+
+```bash
+java -cp out simulator.GUI
+```
+
+In the GUI:
+
+1. Open an assembly source file, or edit the text area directly.
+2. Use **Run** to execute the assembled program.
+3. Use **Step** to execute one instruction at a time.
+4. Inspect the register panel and memory grid after each step.
+
+The sample source format is plain text; files do not need a special extension.
+
+### Run the test suite
+
+```bash
+java -cp out simulator.TestRunner
+```
+
+The runner exits with status `1` when a test fails, which makes it suitable for use in scripts or CI:
+
+```text
+--------------------------------------------------
+Ran 9 tests, failures: 0
+```
+
+## Project layout
+
+```text
+.
+├── ALU.java          Arithmetic, logic, and status flags
+├── Assembler.java    Two-pass assembly parser and label resolver
+├── CPU.java          Instruction execution and stack behavior
+├── GUI.java          Swing editor, controls, registers, and memory view
+├── Instruction.java  Instruction and assembler IR data structures
+├── Memory.java       RAM and stack implementation
+├── TestALU.java      ALU tests
+├── TestAssembler.java Assembler tests
+├── TestCPU.java      CPU integration tests
+└── TestRunner.java   Test entry point and assertions
+```
+
+Compiled `.class` files are generated artifacts. Prefer compiling to `out/` as shown above rather than placing generated files beside the source files.
+
+## Learning goals
+
+This project is useful for exploring:
+
+- How an assembler resolves labels in multiple passes
+- How a program counter drives instruction execution
+- How registers, memory, and a stack interact
+- How ALU flags enable conditional branching
+- How a debugger can visualize machine state
+
 ## Author
-Befekadu Asfaw Tilahun
 
-Electrical and Computer Engineering Student, AAiT
+**Befekadu Asfaw Tilahun**  
+Electrical and Computer Engineering student, AAiT
+
+## License
+
+No license file is currently included in the repository. Add a license before distributing or reusing the project.
