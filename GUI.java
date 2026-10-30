@@ -334,6 +334,46 @@ public class GUI {
         new Timer(2000, e -> toast.dispose()).start();
     }
 
+    private static void showInstructionReference(Component parentComponent) {
+        JTextArea reference = new JTextArea(
+                "16-bit CPU Simulator - Instruction Reference\n\n"
+                        + "Data movement\n"
+                        + "  mov Rd, Rs       Copy a register\n"
+                        + "  mov Rd, #value   Load an immediate value\n\n"
+                        + "Memory\n"
+                        + "  ld Rd, Ra        Load a 16-bit value from memory\n"
+                        + "  st Ra, Rs        Store a 16-bit value in memory\n\n"
+                        + "Arithmetic\n"
+                        + "  add Rd, Rs/#v    Add a register or immediate\n"
+                        + "  sub Rd, Rs/#v    Subtract a register or immediate\n"
+                        + "  cmp Rd, Rs       Compare registers and update flags\n\n"
+                        + "Logic\n"
+                        + "  or/and/xor       Register or immediate bitwise operation\n\n"
+                        + "Control flow\n"
+                        + "  jmp label/#addr  Absolute jump\n"
+                        + "  rjmp #offset     Relative jump\n"
+                        + "  breq/brne        Branch on equal/not equal\n"
+                        + "  brlo/brsh        Branch on lower/same or higher\n"
+                        + "  brmi/brpl        Branch on negative/positive\n"
+                        + "  brge/brlt        Branch on greater/equal or less\n\n"
+                        + "Stack and subroutines\n"
+                        + "  push #value      Push an immediate value\n"
+                        + "  pop              Remove the top stack value\n"
+                        + "  call label/#addr Call a subroutine\n"
+                        + "  ret              Return from a subroutine\n\n"
+                        + "Immediate values use #, for example #10, #0xFF, or #0b1010.\n"
+                        + "Comments begin with ';'.",
+                24, 72);
+        reference.setEditable(false);
+        reference.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
+        reference.setCaretPosition(0);
+
+        JScrollPane scrollPane = new JScrollPane(reference);
+        scrollPane.setPreferredSize(new Dimension(620, 480));
+        JOptionPane.showMessageDialog(parentComponent, scrollPane,
+                "Instruction Reference", JOptionPane.INFORMATION_MESSAGE);
+    }
+
     public static void main(String[] args) {
         // schedule code on the EDT.
         SwingUtilities.invokeLater(() -> createAndShowGUI());
@@ -431,6 +471,10 @@ public class GUI {
             showNotification(frame, "File saved successfuly."); 
         });
         toolBar.add(saveButton);
+
+        JButton instructionButton = new JButton("Instructions");
+        instructionButton.addActionListener(e -> showInstructionReference(frame));
+        toolBar.add(instructionButton);
 
         leftPanel.add(toolBar, BorderLayout.NORTH);
         leftPanel.add(codeScrollPane, BorderLayout.CENTER);

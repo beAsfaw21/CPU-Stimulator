@@ -15,6 +15,7 @@ This roadmap describes possible future improvements for the 16-bit CPU Simulator
 - Clear GUI errors for file, assembly, execution, and step-limit failures
 - GUI reset control for restarting execution without reopening the source file
 - Configurable maximum execution-step limit
+- In-app instruction-set reference
 - Contributor, support, security, and documentation guidance
 
 ## Near-term improvements
@@ -25,7 +26,6 @@ This roadmap describes possible future improvements for the 16-bit CPU Simulator
 ## Future possibilities
 
 - Add a formal instruction encoding or bytecode format
-- Add an instruction-set editor or opcode reference panel in the GUI
 - Add breakpoints and watchpoints
 - Add register and flag change highlighting
 - Add export and import for simulator state
