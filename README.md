@@ -248,6 +248,8 @@ The complete instruction reference is available in [`docs/instruction-set.md`](d
 
 The beginner-focused assembly guide is available in [`docs/assembly-guide.md`](docs/assembly-guide.md).
 
+The contributor-focused development guide is available in [`docs/development-guide.md`](docs/development-guide.md).
+
 ## Project structure
 
 ```text

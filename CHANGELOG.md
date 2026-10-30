@@ -26,6 +26,7 @@ No changes yet.
 - Correct `CALL` and `RET` subroutine execution
 - Detailed instruction-set reference
 - Beginner-focused assembly language guide
+- Contributor-focused development guide
 
 [Unreleased]: https://github.com/beAsfaw21/CPU-Stimulator/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/beAsfaw21/CPU-Stimulator/releases/tag/v1.0.0
